@@ -3,7 +3,7 @@ __pycache__
 lightning_logs/
 logs/
 
-Models/LJSpeech/tensorboard/
+Models/LJSpeech/
 
-*.pth
-*.t7
+# *.pth
+# *.t7
