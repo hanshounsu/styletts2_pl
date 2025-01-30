@@ -182,13 +182,14 @@ class Collater(object):
         
 
     def __call__(self, batch):
-        # batch[0] = wave, mel, text, f0, speakerid
+        # batch[0] : speaker_id, acoustic_feature, text_tensor, ref_text, ref_mel_tensor, ref_label, path, wave
         batch_size = len(batch)
 
         # sort by mel length
-        lengths = [b[1].shape[1] for b in batch]
-        batch_indexes = np.argsort(lengths)[::-1]
-        batch = [batch[bid] for bid in batch_indexes]
+        batch = sorted(batch, key=lambda x: x[1].size(1), reverse=True)
+        # lengths = [b[1].shape[1] for b in batch]
+        # batch_indexes = np.argsort(lengths)[::-1] # descending order
+        # batch = [batch[bid] for bid in batch_indexes]
 
         nmels = batch[0][1].size(0)
         max_mel_length = max([b[1].shape[1] for b in batch])
@@ -225,6 +226,8 @@ class Collater(object):
             
             ref_labels[bid] = ref_label
             waves[bid] = wave
+        
+        # print("Collater: mel size: ", mels.size(), "text size: ", texts.size(), "ref text size: ", ref_texts.size(), "ref mel size: ", ref_mels.size())
 
         return waves, texts, input_lengths, ref_texts, ref_lengths, mels, output_lengths, ref_mels
 
@@ -241,7 +244,12 @@ def build_dataloader(path_list,
                      collate_config={},
                      dataset_config={}):
     
-    dataset = FilePathDataset(path_list, root_path, OOD_data=OOD_data, min_length=min_length, validation=validation, **dataset_config)
+    dataset = FilePathDataset(path_list,
+                              root_path,
+                              OOD_data=OOD_data,
+                              min_length=min_length,
+                              validation=validation,
+                              **dataset_config)
     collate_fn = Collater(**collate_config)
     data_loader = DataLoader(dataset,
                              batch_size=batch_size,

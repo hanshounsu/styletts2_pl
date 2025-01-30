@@ -136,7 +136,7 @@ class LocationLayer(nn.Module):
         super(LocationLayer, self).__init__()
         padding = int((attention_kernel_size - 1) / 2)
         self.location_conv = ConvNorm(2, attention_n_filters,
-                                      kernel_size=attention_kernel_size,
+                                      kernel_size=attention_kernel_size, # 63 (???????)
                                       padding=padding, bias=False, stride=1,
                                       dilation=1)
         self.location_dense = LinearNorm(attention_n_filters, attention_dim,
@@ -168,16 +168,16 @@ class Attention(nn.Module):
         """
         PARAMS
         ------
-        query: decoder output (batch, n_mel_channels * n_frames_per_step)
-        processed_memory: processed encoder outputs (B, T_in, attention_dim)
-        attention_weights_cat: cumulative and prev. att weights (B, 2, max_time)
+        query: decoder output -> (batch, n_mel_channels * n_frames_per_step)
+        processed_memory: processed encoder outputs -> (B, T_in, attention_dim)
+        attention_weights_cat: cumulative and prev. att weights -> (B, 2, max_time)
         RETURNS
         -------
         alignment (batch, max_time)
         """
 
-        processed_query = self.query_layer(query.unsqueeze(1))
-        processed_attention_weights = self.location_layer(attention_weights_cat)
+        processed_query = self.query_layer(query.unsqueeze(1)) # (B, 1, attention_dim)
+        processed_attention_weights = self.location_layer(attention_weights_cat) # (B, max_time, attention_dim)
         energies = self.v(torch.tanh(
             processed_query + processed_attention_weights + processed_memory))
 
@@ -189,11 +189,11 @@ class Attention(nn.Module):
         """
         PARAMS
         ------
-        attention_hidden_state: attention rnn last output
-        memory: encoder outputs
-        processed_memory: processed encoder outputs
-        attention_weights_cat: previous and cummulative attention weights
-        mask: binary mask for padded data
+        attention_hidden_state: attention rnn last output -> (B, attention_rnn_dim)
+        memory: encoder outputs -> (B, max_time, attention_dim)
+        processed_memory: processed encoder outputs -> (B, max_time, attention_dim)
+        attention_weights_cat: previous and cummulative attention weights -> (B, 2, max_time)
+        mask: binary mask for padded data -> (B, max_time)
         """
         alignment = self.get_alignment_energies(
             attention_hidden_state, processed_memory, attention_weights_cat)
@@ -201,9 +201,9 @@ class Attention(nn.Module):
         if mask is not None:
             alignment.data.masked_fill_(mask, self.score_mask_value)
 
-        attention_weights = F.softmax(alignment, dim=1)
+        attention_weights = F.softmax(alignment, dim=1) # (B, max_time)
         attention_context = torch.bmm(attention_weights.unsqueeze(1), memory)
-        attention_context = attention_context.squeeze(1)
+        attention_context = attention_context.squeeze(1) # (B, attention_dim)
 
         return attention_context, attention_weights
 

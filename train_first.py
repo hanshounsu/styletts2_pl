@@ -18,6 +18,7 @@ import numpy as np
 import torch
 from torch import nn
 import torch.nn.functional as F
+from tqdm import tqdm
 import torchaudio
 import librosa
 
@@ -171,22 +172,36 @@ def main(config_path):
                    sr, 
                    model_params.slm.sr).to(device)
 
+    # print model total trainable and freezed parameters
+    total_trainable_params = 0
+    total_non_trainable_params = 0
+    for key in model:
+        print(key)
+        # Print in 0.0M or 0.00k style, not the whole number
+        print('Trainable parameters:', sum(p.numel() for p in model[key].parameters() if p.requires_grad) / 1e6, 'M')
+        print('Non-trainable parameters:', sum(p.numel() for p in model[key].parameters() if not p.requires_grad) / 1e6, 'M')
+        total_trainable_params += sum(p.numel() for p in model[key].parameters() if p.requires_grad)
+        total_non_trainable_params += sum(p.numel() for p in model[key].parameters() if not p.requires_grad)
+    print('Total trainable parameters:', total_trainable_params / 1e6, 'M')
+    print('Total non-trainable parameters:', total_non_trainable_params / 1e6, 'M')
+    
+
     for epoch in range(start_epoch, epochs):
         running_loss = 0
         start_time = time.time()
 
         _ = [model[key].train() for key in model]
 
-        for i, batch in enumerate(train_dataloader):
+        for i, batch in enumerate(tqdm(train_dataloader)):
             waves = batch[0]
             batch = [b.to(device) for b in batch[1:]]
-            texts, input_lengths, _, _, mels, mel_input_length, _ = batch
+            texts, input_lengths, _, _, mels, mel_input_length, _ = batch # texts and mels are masked as zero elements to fit to be same length
             
             with torch.no_grad():
                 mask = length_to_mask(mel_input_length // (2 ** n_down)).to('cuda')
                 text_mask = length_to_mask(input_lengths).to(texts.device)
 
-            ppgs, s2s_pred, s2s_attn = model.text_aligner(mels, mask, texts)
+            ppgs, s2s_pred, s2s_attn = model.text_aligner(mels, mask, texts) # mask length is halved by 2 ** n_down (but why??? (240122 hounsu))
 
             s2s_attn = s2s_attn.transpose(-1, -2)
             s2s_attn = s2s_attn[..., 1:]

@@ -94,10 +94,10 @@ class UpSample(nn.Module):
 
 
 class ResBlk(nn.Module):
-    def __init__(self, dim_in, dim_out, actv=nn.LeakyReLU(0.2),
+    def __init__(self, dim_in, dim_out,
                  normalize=False, downsample='none'):
         super().__init__()
-        self.actv = actv
+        self.actv = nn.LeakyReLU(0.2)
         self.normalize = normalize
         self.downsample = DownSample(downsample)
         self.downsample_res = LearnedDownSample(downsample, dim_in)
@@ -208,10 +208,10 @@ class Discriminator2d(nn.Module):
         return out, features
 
 class ResBlk1d(nn.Module):
-    def __init__(self, dim_in, dim_out, actv=nn.LeakyReLU(0.2),
+    def __init__(self, dim_in, dim_out,
                  normalize=False, downsample='none', dropout_p=0.2):
         super().__init__()
-        self.actv = actv
+        self.actv = nn.LeakyReLU(0.2)
         self.normalize = normalize
         self.downsample_type = downsample
         self.learned_sc = dim_in != dim_out
@@ -282,7 +282,7 @@ class LayerNorm(nn.Module):
         return x.transpose(1, -1)
     
 class TextEncoder(nn.Module):
-    def __init__(self, channels, kernel_size, depth, n_symbols, actv=nn.LeakyReLU(0.2)):
+    def __init__(self, channels, kernel_size, depth, n_symbols):
         super().__init__()
         self.embedding = nn.Embedding(n_symbols, channels)
 
@@ -292,7 +292,7 @@ class TextEncoder(nn.Module):
             self.cnn.append(nn.Sequential(
                 weight_norm(nn.Conv1d(channels, channels, kernel_size=kernel_size, padding=padding)),
                 LayerNorm(channels),
-                actv,
+                nn.LeakyReLU(0.2),
                 nn.Dropout(0.2),
             ))
         # self.cnn = nn.Sequential(*self.cnn)
@@ -370,10 +370,10 @@ class UpSample1d(nn.Module):
             return F.interpolate(x, scale_factor=2, mode='nearest')
 
 class AdainResBlk1d(nn.Module):
-    def __init__(self, dim_in, dim_out, style_dim=64, actv=nn.LeakyReLU(0.2),
+    def __init__(self, dim_in, dim_out, style_dim=64,
                  upsample='none', dropout_p=0.0):
         super().__init__()
-        self.actv = actv
+        self.actv = nn.LeakyReLU(0.2)
         self.upsample_type = upsample
         self.upsample = UpSample1d(upsample)
         self.learned_sc = dim_in != dim_out
@@ -613,7 +613,6 @@ def load_ASR_models(ASR_MODEL_PATH, ASR_MODEL_CONFIG):
 
 def build_model(args, text_aligner, pitch_extractor, bert):
     assert args.decoder.type in ['istftnet', 'hifigan'], 'Decoder type unknown'
-    
     if args.decoder.type == "istftnet":
         from Modules.istftnet import Decoder
         decoder = Decoder(dim_in=args.hidden_dim, style_dim=args.style_dim, dim_out=args.n_mels,

@@ -1,0 +1,180 @@
+seed_everything: 23
+# ckpt_path : checkpoints/2025-01-08T02-39-00/last.ckpt
+wandb: True
+debug: False
+batch_size: &batch_size 1
+sample_rate: &sr 24000
+test_save_path: './results/'
+
+trainer:
+  # benchmark: True # only when input is constant, this significantly fluctuates the GPU memory otherwise!!
+  # accumulate_grad_batches: 1
+  devices: 4
+  accelerator: gpu
+  strategy: ddp_find_unused_parameters_true
+  log_every_n_steps: 10
+  # check_val_every_n_epoch: 1
+  val_check_interval: 0.25
+  enable_checkpointing: False
+  # num_sanity_val_steps: 0
+  max_epochs: &epochs 200
+  # profiler: advanced
+  # precision: bf16
+
+  callbacks:
+    - class_path: CLI.callbacks.train_speed.TrainingSpeedCallback
+      init_args:
+        log_every_n_steps: 10
+
+model:
+  sr: *sr
+  max_len: 350
+  multispeaker: False
+  loss_params:
+    lambda_mel: 5. # mel reconstruction loss
+    lambda_gen: 1. # generator loss
+    lambda_slm: 1. # slm feature matching loss
+    
+    lambda_mono: 1. # monotonic alignment loss (1st stage, TMA)
+    lambda_s2s: 1. # sequence-to-sequence loss (1st stage, TMA)
+
+    lambda_F0: 1. # F0 reconstruction loss (2nd stage)
+    lambda_norm: 1. # norm reconstruction loss (2nd stage)
+    lambda_dur: 1. # duration loss (2nd stage)
+    lambda_ce: 20. # duration predictor probability output CE loss (2nd stage)
+    lambda_sty: 1. # style reconstruction loss (2nd stage)
+    lambda_diff: 1. # score matching loss (2nd stage)
+    
+  epochs:
+    TMA_epoch: 0 # TMA starting epoch (1st stage)
+
+  slm:
+    model: 'microsoft/wavlm-base-plus'
+    sr: 16000
+
+  ASR_checkpoint_path: Utils/ASR/epoch_00080.pth
+  ASR:
+    class_path: Utils.ASR.models.ASRCNN
+    init_args:
+      input_dim: 80
+      hidden_dim: 256
+      n_token: 178
+      n_layers: 6
+      token_embedding_dim: 512
+
+  F0_checkpoint_path: Utils/JDC/bst.t7
+  F0:
+    class_path: Utils.JDC.model.JDCNet
+    init_args:
+      num_class: 1
+      seq_len: 192
+  
+  PLBERT_dir: Utils/PLBERT/
+
+  decoder:
+    class_path: Modules.istftnet.Decoder
+    init_args:
+      dim_in: &hidden_dim 512
+      style_dim: &style_dim 128
+      dim_out: &n_mels 80
+      resblock_kernel_sizes: [3,7,11]
+      upsample_rates :  [10, 6]
+      upsample_initial_channel: 512
+      resblock_dilation_sizes: [[1,3,5], [1,3,5], [1,3,5]]
+      upsample_kernel_sizes: [20, 12]
+      gen_istft_n_fft: 20
+      gen_istft_hop_size: 5
+  
+  text_encoder:
+    class_path: models.TextEncoder
+    init_args:
+      channels: *hidden_dim
+      kernel_size: 5
+      depth: &n_layer 3
+      n_symbols: &n_token 178
+  
+  prosody_predictor:
+    class_path: models.ProsodyPredictor
+    init_args:
+      style_dim: *style_dim
+      d_hid: *hidden_dim
+      nlayers: *n_layer
+      max_dur: &max_dur 50
+      dropout: &dropout 0.2
+  
+  style_encoder:
+    class_path: models.StyleEncoder
+    init_args:
+      dim_in: &dim_in 64
+      style_dim: *style_dim
+      max_conv_dim: *hidden_dim
+  
+  predictor_encoder:
+    class_path: models.StyleEncoder
+    init_args:
+      dim_in: *dim_in
+      style_dim: *style_dim
+      max_conv_dim: *hidden_dim
+    
+
+  audio_diffusion_conditional:
+    class_path: models.AudioDiffusionConditional
+    init_args:
+      embedding_max_length: &bert_max_position_embeddings 512
+      embedding_features: &bert_hidden_size 768
+      in_channels: 1
+      channels: &style_dim_2 256
+      context_features: *style_dim_2
+      embedding_mask_proba: &embedding_mask_proba 0.1
+  
+  k_diffusion:
+    class_path: Modules.diffusion.sampler.KDiffusion
+    init_args:
+      net:
+        class_path: models.Transformer1d
+        init_args:
+          channels: *style_dim_2 # style_dim x 2
+          context_embedding_features: *bert_hidden_size
+          num_layers: 3
+          num_heads: 8
+          head_features: 64
+          multiplier: 2
+      sigma_distribution:
+        class_path: Modules.diffusion.sampler.LogNormalDistribution
+        init_args:
+          mean: -3.0
+          std: 1.0
+
+      sigma_data: 0.2
+      dynamic_threshold: 0.0
+  
+  mpd:
+    class_path: Modules.discriminators.MultiPeriodDiscriminator
+    init_args: {}
+  
+  msd:
+    class_path: Modules.discriminators.MultiResSpecDiscriminator
+    init_args: {}
+  
+  wd:
+    class_path: Modules.discriminators.WavLMDiscriminator
+    init_args: 
+      slm_hidden: 768
+      slm_layers: 13
+      initial_channel: 64
+  
+
+  optimizer:
+    class_path: torch.optim.AdamW
+    init_args:
+      lr: 1.0e-4
+  
+
+data:
+  train_path: "Data/train_list.txt"
+  val_path: "Data/val_list.txt"
+  root_path: "/home/hounsu/Dataset/LJSpeech-1.1/wavs_24k"
+  OOD_path: "Data/OOD_texts.txt"
+  min_length: 50
+  batch_size: *batch_size
+  device: cuda
