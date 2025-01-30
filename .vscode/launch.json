@@ -1,0 +1,36 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "train_first",
+            "type": "debugpy",
+            "request": "launch",
+            "cwd": "/home/hounsu/voice/StyleTTS2/",
+            "program": "./train_first.py",
+            "args": [
+                "--config_path", "Configs/config.yml"
+            ],
+            "env": {
+                "NCCL_P2P_DISABLE": "1",
+                "NCCL_IB_DISABLE": "1"
+            },
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "train_first cli",
+            "type": "debugpy",
+            "request": "launch",
+            "cwd": "/home/hounsu/voice/StyleTTS2/",
+            "program": "./train_first_cli.py",
+            "args": [
+                "fit",
+                "--config",
+                "Configs/config_1st_cli.yaml"
+            ],
+            "console": "integratedTerminal"
+        }
+    ]
+}

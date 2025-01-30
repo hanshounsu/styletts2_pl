@@ -42,7 +42,7 @@ class ASRCNN(nn.Module):
         x = x.transpose(1, 2)
         ctc_logit = self.ctc_linear(x)
         if text_input is not None:
-            _, s2s_logit, s2s_attn = self.asr_s2s(x, src_key_padding_mask, text_input)
+            _, s2s_logit, s2s_attn = self.asr_s2s(x, src_key_padding_mask, text_input) # here, obtain the alignment, when text is given..?
             return ctc_logit, s2s_logit, s2s_attn
         else:
             return ctc_logit
@@ -110,28 +110,28 @@ class ASRS2S(nn.Module):
         self.attention_weights_cum = torch.zeros((B, L)).type_as(memory)
         self.attention_context = torch.zeros((B, H)).type_as(memory)
         self.memory = memory
-        self.processed_memory = self.attention_layer.memory_layer(memory)
+        self.processed_memory = self.attention_layer.memory_layer(memory) # just simple linear projection
         self.mask = mask
         self.unk_index = 3
         self.random_mask = 0.1
 
     def forward(self, memory, memory_mask, text_input):
         """
-        moemory.shape = (B, L, H) = (Batchsize, Maxtimestep, Hiddendim)
-        moemory_mask.shape = (B, L, )
+        memory.shape = (B, L, H) = (Batchsize, Maxtimestep, Hiddendim) -> output of encoder
+        memory_mask.shape = (B, L, )
         texts_input.shape = (B, T)
         """
         self.initialize_decoder_states(memory, memory_mask)
         # text random mask
         random_mask = (torch.rand(text_input.shape) < self.random_mask).to(text_input.device)
         _text_input = text_input.clone()
-        _text_input.masked_fill_(random_mask, self.unk_index)
+        _text_input.masked_fill_(random_mask, self.unk_index) # fill random elements with self.unk_index
         decoder_inputs = self.embedding(_text_input).transpose(0, 1) # -> [T, B, channel]
         start_embedding = self.embedding(
-            torch.LongTensor([self.sos]*decoder_inputs.size(1)).to(decoder_inputs.device))
-        decoder_inputs = torch.cat((start_embedding.unsqueeze(0), decoder_inputs), dim=0)
+            torch.LongTensor([self.sos]*decoder_inputs.size(1)).to(decoder_inputs.device)) # -> [B, channel]
+        decoder_inputs = torch.cat((start_embedding.unsqueeze(0), decoder_inputs), dim=0) # -> [T+1, B, channel]
 
-        hidden_outputs, logit_outputs, alignments = [], [], []
+        hidden_outputs, logit_outputs, alignments = [], [], [] # length of each list = length of text (T)
         while len(hidden_outputs) < decoder_inputs.size(0):
 
             decoder_input = decoder_inputs[len(hidden_outputs)]
@@ -144,30 +144,30 @@ class ASRS2S(nn.Module):
             self.parse_decoder_outputs(
                 hidden_outputs, logit_outputs, alignments)
 
-        return hidden_outputs, logit_outputs, alignments
+        return hidden_outputs, logit_outputs, alignments # -> [B, T_out + 1, H], [B, T_out + 1, n_symbols(tokens)], [B, T_out + 1, L(=max_time)]
 
 
     def decode(self, decoder_input):
 
-        cell_input = torch.cat((decoder_input, self.attention_context), -1)
-        self.decoder_hidden, self.decoder_cell = self.decoder_rnn(
-            cell_input,
-            (self.decoder_hidden, self.decoder_cell))
+        cell_input = torch.cat((decoder_input, self.attention_context), -1) # -> [B, channel + H(attention_context)]
+        self.decoder_hidden, self.decoder_cell = self.decoder_rnn( # hidden이 곧 output
+            cell_input, # input tensor : [B, channel + H(attention_context)]
+            (self.decoder_hidden, self.decoder_cell)) # initial hidden states : self.decoder_hidden -> [B, H], self.decoder_cell -> [B, H]
 
         attention_weights_cat = torch.cat(
             (self.attention_weights.unsqueeze(1),
-            self.attention_weights_cum.unsqueeze(1)),dim=1)
+            self.attention_weights_cum.unsqueeze(1)),dim=1) # what is self.attention_weights_cum?
 
         self.attention_context, self.attention_weights = self.attention_layer(
-            self.decoder_hidden,
-            self.memory,
-            self.processed_memory,
+            self.decoder_hidden, # B, H
+            self.memory, # B, L, H
+            self.processed_memory, # B, L, H'(attention_dim)(=H)
             attention_weights_cat,
             self.mask)
 
         self.attention_weights_cum += self.attention_weights
 
-        hidden_and_context = torch.cat((self.decoder_hidden, self.attention_context), -1)
+        hidden_and_context = torch.cat((self.decoder_hidden, self.attention_context), -1) # 갑자기 이거 2개는 왜 concat 하는데...
         hidden = self.project_to_hidden(hidden_and_context)
 
         # dropout to increasing g

@@ -36,7 +36,7 @@ Audio Diffusion Classes (specific for 1d audio data)
 
 def get_default_model_kwargs():
     return dict(
-        channels=128,
+        # channels=128,
         patch_size=16,
         multipliers=[1, 2, 4, 4, 4, 4, 4],
         factors=[4, 4, 4, 2, 2, 2],
@@ -68,8 +68,10 @@ class AudioDiffusionConditional(Model1d):
         self,
         embedding_features: int,
         embedding_max_length: int,
+        in_channels: int,
+        channels: int,
+        context_features: int,
         embedding_mask_proba: float = 0.1,
-        **kwargs,
     ):
         self.embedding_mask_proba = embedding_mask_proba
         default_kwargs = dict(
@@ -78,7 +80,7 @@ class AudioDiffusionConditional(Model1d):
             context_embedding_features=embedding_features,
             context_embedding_max_length=embedding_max_length,
         )
-        super().__init__(**{**default_kwargs, **kwargs})
+        super().__init__(in_channels=in_channels, channels=channels, context_features=context_features, **{**default_kwargs})
 
     def forward(self, *args, **kwargs):
         default_kwargs = dict(embedding_mask_proba=self.embedding_mask_proba)

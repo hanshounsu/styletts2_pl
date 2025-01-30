@@ -408,10 +408,10 @@ class Generator(torch.nn.Module):
 
         
 class AdainResBlk1d(nn.Module):
-    def __init__(self, dim_in, dim_out, style_dim=64, actv=nn.LeakyReLU(0.2),
+    def __init__(self, dim_in, dim_out, style_dim=64,
                  upsample='none', dropout_p=0.0):
         super().__init__()
-        self.actv = actv
+        self.actv = nn.LeakyReLU(0.2)
         self.upsample_type = upsample
         self.upsample = UpSample1d(upsample)
         self.learned_sc = dim_in != dim_out

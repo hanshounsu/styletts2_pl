@@ -1,1 +1,9 @@
 __pycache__
+
+lightning_logs/
+logs/
+
+Models/LJSpeech/tensorboard/
+
+*.pth
+*.t7
