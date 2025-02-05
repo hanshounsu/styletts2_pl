@@ -43,13 +43,13 @@ class StyleTTS2CLI(LightningCLI):
         # Model checkpoint (automatically called after validation)
         model_checkpoint_callback = ModelCheckpoint(
             dirpath=f'./checkpoints/{self.now}',
-            monitor='',
+            monitor='val/mel_loss',
             mode='min',
             save_top_k=20,
             save_last=True,
             verbose=True,
             save_on_train_epoch_end=True,
-            filename='{step:07}-{val/diffusion_loss:.4f}')  # python recognized '/', '-' as '_'
+            filename='{step:07}-{val/mel_loss:.4f}')  # python recognized '/', '-' as '_'
 
         self.trainer.callbacks.append(model_checkpoint_callback)
         self.config.fit.test_save_path = f"./results/{self.now}"

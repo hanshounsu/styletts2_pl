@@ -110,12 +110,12 @@ def main(config_path):
                                       device=device,
                                       dataset_config={})
     
-    # load pretrained ASR model
+    # load pretrained ASR model (initially trained on ASR task using LibriSpeech corpus, fine-tuned concurrently with decoder)
     ASR_config = config.get('ASR_config', False)
     ASR_path = config.get('ASR_path', False)
     text_aligner = load_ASR_models(ASR_path, ASR_config)
     
-    # load pretrained F0 model
+    # load pretrained F0 model (initially trained with ground truth F0 (YIN) using LibriSpeech corpus, fine-tuned concurrently with decoder)
     F0_path = config.get('F0_path', False)
     pitch_extractor = load_F0_models(F0_path)
     
@@ -139,7 +139,7 @@ def main(config_path):
 
     load_pretrained = config.get('pretrained_model', '') != '' and config.get('second_stage_load_pretrained', False)
     
-    if not load_pretrained:
+    if not load_pretrained: # load the first stage model if starting from epoch 0
         if config.get('first_stage_path', '') != '':
             first_stage_path = osp.join(log_dir, config.get('first_stage_path', 'first_stage.pth'))
             print('Loading the first stage model at %s ...' % first_stage_path)
@@ -147,14 +147,14 @@ def main(config_path):
                 None, 
                 first_stage_path,
                 load_only_params=True,
-                ignore_modules=['bert', 'bert_encoder', 'predictor', 'predictor_encoder', 'msd', 'mpd', 'wd', 'diffusion']) # keep starting epoch for tensorboard log
+                ignore_modules=['bert', 'bert_encoder', 'duration_prosody_predictor', 'prosodic_style_encoder', 'msd', 'mpd', 'wd', 'diffusion']) # keep starting epoch for tensorboard log
 
             # these epochs should be counted from the start epoch
             diff_epoch += start_epoch
             joint_epoch += start_epoch
             epochs += start_epoch
             
-            model.predictor_encoder = copy.deepcopy(model.style_encoder)
+            model.prosodic_style_encoder = copy.deepcopy(model.acoustic_style_encoder)
         else:
             raise ValueError('You need to specify the path to the first stage model.') 
 
@@ -185,7 +185,7 @@ def main(config_path):
     scheduler_params_dict= {key: scheduler_params.copy() for key in model}
     scheduler_params_dict['bert']['max_lr'] = optimizer_params.bert_lr * 2
     scheduler_params_dict['decoder']['max_lr'] = optimizer_params.ft_lr * 2
-    scheduler_params_dict['style_encoder']['max_lr'] = optimizer_params.ft_lr * 2
+    scheduler_params_dict['acoustic_style_encoder']['max_lr'] = optimizer_params.ft_lr * 2
     
     optimizer = build_optimizer({key: model[key].parameters() for key in model},
                                           scheduler_params_dict=scheduler_params_dict, lr=optimizer_params.lr)
@@ -199,7 +199,7 @@ def main(config_path):
         g['weight_decay'] = 0.01
         
     # adjust acoustic module learning rate
-    for module in ["decoder", "style_encoder"]:
+    for module in ["decoder", "acoustic_style_encoder"]:
         for g in optimizer.optimizers[module].param_groups:
             g['betas'] = (0.0, 0.99)
             g['lr'] = optimizer_params.ft_lr
@@ -219,7 +219,7 @@ def main(config_path):
     loss_test_record = list([])
     iters = 0
     
-    criterion = nn.L1Loss() # F0 loss (regression)
+    # criterion = nn.L1Loss() # F0 loss (regression)
     torch.cuda.empty_cache()
     
     stft_loss = MultiResolutionSTFTLoss().to(device)
@@ -247,7 +247,7 @@ def main(config_path):
 
         _ = [model[key].eval() for key in model]
 
-        model.predictor.train()
+        model.duration_prosody_predictor.train()
         model.bert_encoder.train()
         model.bert.train()
         model.msd.train()
@@ -267,6 +267,7 @@ def main(config_path):
                 mel_mask = length_to_mask(mel_input_length).to(device)
                 text_mask = length_to_mask(input_lengths).to(texts.device)
 
+                # 1. Extract the alignment matrix
                 try:
                     _, _, s2s_attn = model.text_aligner(mels, mask, texts)
                     s2s_attn = s2s_attn.transpose(-1, -2)
@@ -286,8 +287,8 @@ def main(config_path):
                 
                 # compute reference styles
                 if multispeaker and epoch >= diff_epoch:
-                    ref_ss = model.style_encoder(ref_mels.unsqueeze(1))
-                    ref_sp = model.predictor_encoder(ref_mels.unsqueeze(1))
+                    ref_ss = model.acoustic_style_encoder(ref_mels.unsqueeze(1))
+                    ref_sp = model.prosodic_style_encoder(ref_mels.unsqueeze(1))
                     ref = torch.cat([ref_ss, ref_sp], dim=1)
 
             # compute the style of the entire utterance
@@ -297,9 +298,9 @@ def main(config_path):
             for bib in range(len(mel_input_length)):
                 mel_length = int(mel_input_length[bib].item())
                 mel = mels[bib, :, :mel_input_length[bib]]
-                s = model.predictor_encoder(mel.unsqueeze(0).unsqueeze(1))
+                s = model.prosodic_style_encoder(mel.unsqueeze(0).unsqueeze(1))
                 ss.append(s)
-                s = model.style_encoder(mel.unsqueeze(0).unsqueeze(1))
+                s = model.acoustic_style_encoder(mel.unsqueeze(0).unsqueeze(1))
                 gs.append(s)
 
             s_dur = torch.stack(ss).squeeze()  # global prosodic styles
@@ -338,7 +339,7 @@ def main(config_path):
                 loss_sty = 0
                 loss_diff = 0
 
-            d, p = model.predictor(d_en, s_dur, 
+            d, p = model.duration_prosody_predictor(d_en, s_dur, 
                                                     input_lengths, 
                                                     s2s_attn_mono, 
                                                     text_mask)
@@ -376,8 +377,8 @@ def main(config_path):
             if gt.size(-1) < 80:
                 continue
 
-            s_dur = model.predictor_encoder(st.unsqueeze(1) if multispeaker else gt.unsqueeze(1))
-            s = model.style_encoder(st.unsqueeze(1) if multispeaker else gt.unsqueeze(1))
+            s_dur = model.prosodic_style_encoder(st.unsqueeze(1) if multispeaker else gt.unsqueeze(1))
+            s = model.acoustic_style_encoder(st.unsqueeze(1) if multispeaker else gt.unsqueeze(1))
             
             with torch.no_grad():
                 F0_real, _, F0 = model.pitch_extractor(gt.unsqueeze(1))
@@ -397,7 +398,7 @@ def main(config_path):
                     # ground truth from reconstruction
                     wav = y_rec_gt_pred # use reconstruction since decoder is fixed
 
-            F0_fake, N_fake = model.predictor.F0Ntrain(p_en, s_dur)
+            F0_fake, N_fake = model.duration_prosody_predictor.F0Ntrain(p_en, s_dur)
 
             y_rec = model.decoder(en, F0_fake, N_fake, s)
 
@@ -458,14 +459,14 @@ def main(config_path):
 
             optimizer.step('bert_encoder')
             optimizer.step('bert')
-            optimizer.step('predictor')
-            optimizer.step('predictor_encoder')
+            optimizer.step('duration_prosody_predictor')
+            optimizer.step('prosodic_style_encoder')
             
             if epoch >= diff_epoch:
                 optimizer.step('diffusion')
             
             if epoch >= joint_epoch:
-                optimizer.step('style_encoder')
+                optimizer.step('acoustic_style_encoder')
                 optimizer.step('decoder')
         
                 # randomly pick whether to use in-distribution text
@@ -506,17 +507,17 @@ def main(config_path):
                     total_norm[key] = total_norm[key] ** 0.5
 
                 # gradient scaling
-                if total_norm['predictor'] > slmadv_params.thresh:
+                if total_norm['duration_prosody_predictor'] > slmadv_params.thresh:
                     for key in model.keys():
                         for p in model[key].parameters():
                             if p.grad is not None:
-                                p.grad *= (1 / total_norm['predictor']) 
+                                p.grad *= (1 / total_norm['duration_prosody_predictor']) 
 
-                for p in model.predictor.duration_proj.parameters():
+                for p in model.duration_prosody_predictor.duration_proj.parameters():
                     if p.grad is not None:
                         p.grad *= slmadv_params.scale
 
-                for p in model.predictor.lstm.parameters():
+                for p in model.duration_prosody_predictor.lstm.parameters():
                     if p.grad is not None:
                         p.grad *= slmadv_params.scale
 
@@ -526,7 +527,7 @@ def main(config_path):
 
                 optimizer.step('bert_encoder')
                 optimizer.step('bert')
-                optimizer.step('predictor')
+                optimizer.step('duration_prosody_predictor')
                 optimizer.step('diffusion')
 
                 # SLM discriminator loss
@@ -599,9 +600,9 @@ def main(config_path):
                     for bib in range(len(mel_input_length)):
                         mel_length = int(mel_input_length[bib].item())
                         mel = mels[bib, :, :mel_input_length[bib]]
-                        s = model.predictor_encoder(mel.unsqueeze(0).unsqueeze(1))
+                        s = model.prosodic_style_encoder(mel.unsqueeze(0).unsqueeze(1))
                         ss.append(s)
-                        s = model.style_encoder(mel.unsqueeze(0).unsqueeze(1))
+                        s = model.acoustic_style_encoder(mel.unsqueeze(0).unsqueeze(1))
                         gs.append(s)
 
                     s = torch.stack(ss).squeeze()
@@ -610,7 +611,7 @@ def main(config_path):
 
                     bert_dur = model.bert(texts, attention_mask=(~text_mask).int())
                     d_en = model.bert_encoder(bert_dur).transpose(-1, -2) 
-                    d, p = model.predictor(d_en, s, 
+                    d, p = model.duration_prosody_predictor(d_en, s, 
                                                         input_lengths, 
                                                         s2s_attn_mono, 
                                                         text_mask)
@@ -639,9 +640,9 @@ def main(config_path):
                     p_en = torch.stack(p_en)
                     gt = torch.stack(gt).detach()
 
-                    s = model.predictor_encoder(gt.unsqueeze(1))
+                    s = model.prosodic_style_encoder(gt.unsqueeze(1))
 
-                    F0_fake, N_fake = model.predictor.F0Ntrain(p_en, s)
+                    F0_fake, N_fake = model.duration_prosody_predictor.F0Ntrain(p_en, s)
 
                     loss_dur = 0
                     for _s2s_pred, _text_input, _text_length in zip(d, (d_gt), input_lengths):
@@ -656,7 +657,7 @@ def main(config_path):
 
                     loss_dur /= texts.size(0)
 
-                    s = model.style_encoder(gt.unsqueeze(1))
+                    s = model.acoustic_style_encoder(gt.unsqueeze(1))
 
                     y_rec = model.decoder(en, F0_fake, N_fake, s)
                     loss_mel = stft_loss(y_rec.squeeze(), wav.detach())
@@ -693,17 +694,17 @@ def main(config_path):
 
                     F0_real, _, _ = model.pitch_extractor(gt.unsqueeze(1))
                     F0_real = F0_real.unsqueeze(0)
-                    s = model.style_encoder(gt.unsqueeze(1))
+                    s = model.acoustic_style_encoder(gt.unsqueeze(1))
                     real_norm = log_norm(gt.unsqueeze(1)).squeeze(1)
 
                     y_rec = model.decoder(en, F0_real, real_norm, s)
 
                     writer.add_audio('eval/y' + str(bib), y_rec.cpu().numpy().squeeze(), epoch, sample_rate=sr)
 
-                    s_dur = model.predictor_encoder(gt.unsqueeze(1))
+                    s_dur = model.prosodic_style_encoder(gt.unsqueeze(1))
                     p_en = p[bib, :, :mel_length // 2].unsqueeze(0)
 
-                    F0_fake, N_fake = model.predictor.F0Ntrain(p_en, s_dur)
+                    F0_fake, N_fake = model.duration_prosody_predictor.F0Ntrain(p_en, s_dur)
 
                     y_pred = model.decoder(en, F0_fake, N_fake, s)
 
@@ -719,8 +720,8 @@ def main(config_path):
             with torch.no_grad():
                 # compute reference styles
                 if multispeaker and epoch >= diff_epoch:
-                    ref_ss = model.style_encoder(ref_mels.unsqueeze(1))
-                    ref_sp = model.predictor_encoder(ref_mels.unsqueeze(1))
+                    ref_ss = model.acoustic_style_encoder(ref_mels.unsqueeze(1))
+                    ref_sp = model.prosodic_style_encoder(ref_mels.unsqueeze(1))
                     ref_s = torch.cat([ref_ss, ref_sp], dim=1)
                     
                 for bib in range(len(d_en)):
@@ -739,11 +740,11 @@ def main(config_path):
                     s = s_pred[:, 128:]
                     ref = s_pred[:, :128]
 
-                    d = model.predictor.text_encoder(d_en[bib, :, :input_lengths[bib]].unsqueeze(0), 
+                    d = model.duration_prosody_predictor.text_encoder(d_en[bib, :, :input_lengths[bib]].unsqueeze(0), 
                                                      s, input_lengths[bib, ...].unsqueeze(0), text_mask[bib, :input_lengths[bib]].unsqueeze(0))
 
-                    x, _ = model.predictor.lstm(d)
-                    duration = model.predictor.duration_proj(x)
+                    x, _ = model.duration_prosody_predictor.lstm(d)
+                    duration = model.duration_prosody_predictor.duration_proj(x)
 
                     duration = torch.sigmoid(duration).sum(axis=-1)
                     pred_dur = torch.round(duration.squeeze()).clamp(min=1)
@@ -758,7 +759,7 @@ def main(config_path):
 
                     # encode prosody
                     en = (d.transpose(-1, -2) @ pred_aln_trg.unsqueeze(0).to(texts.device))
-                    F0_pred, N_pred = model.predictor.F0Ntrain(en, s)
+                    F0_pred, N_pred = model.duration_prosody_predictor.F0Ntrain(en, s)
                     out = model.decoder((t_en[bib, :, :input_lengths[bib]].unsqueeze(0) @ pred_aln_trg.unsqueeze(0).to(texts.device)), 
                                             F0_pred, N_pred, ref.squeeze().unsqueeze(0))
 

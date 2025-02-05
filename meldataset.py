@@ -81,7 +81,7 @@ class FilePathDataset(torch.utils.data.Dataset):
 
         _data_list = [l.strip().split('|') for l in data_list]
         self.data_list = [data if len(data) == 3 else (*data, 0) for data in _data_list]
-        self.text_cleaner = TextCleaner()
+        self.text_cleaner = TextCleaner() # change "number + alphabet + ipa" sets to int indices
         self.sr = sr
 
         self.df = pd.DataFrame(self.data_list)
@@ -93,7 +93,7 @@ class FilePathDataset(torch.utils.data.Dataset):
         self.max_mel_length = 192
         
         self.min_length = min_length
-        with open(OOD_data, 'r', encoding='utf-8') as f:
+        with open(OOD_data, 'r', encoding='utf-8') as f: # from LibriTTS
             tl = f.readlines()
         idx = 1 if '.wav' in tl[0].split('|')[0] else 0
         self.ptexts = [t.split('|')[idx] for t in tl]

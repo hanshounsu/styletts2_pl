@@ -1,35 +1,15 @@
-from accelerate.logging import get_logger
-import logging
-from torch.utils.tensorboard import SummaryWriter
-from accelerate import DistributedDataParallelKwargs
-from accelerate.utils import LoggerType
-from accelerate import Accelerator
-import time
-from optimizers import build_optimizer
 from losses import *
 from utils import *
-from meldataset import build_dataloader
 from models import *
-import librosa
-import torchaudio
-from tqdm import tqdm
 import torch.nn.functional as F
 from torch import nn
-from munch import Munch
 import random
-import warnings
-import click
 import torch
 import numpy as np
-import shutil
-import yaml
-import sys
-import re
-import os.path as osp
-import os
 import pytorch_lightning as pl
 from lightning.pytorch.cli import OptimizerCallable, LRSchedulerCallable
 from Utils.PLBERT.util import load_plbert
+import wandb
 
 
 class First(pl.LightningModule):
@@ -48,8 +28,8 @@ class First(pl.LightningModule):
                  decoder: nn.Module,
                  text_encoder: nn.Module,
                  prosody_predictor: nn.Module,
-                 style_encoder: nn.Module,
-                 predictor_encoder: nn.Module,
+                 acoustic_style_encoder: nn.Module,
+                 prosodic_style_encoder: nn.Module,
                  audio_diffusion_conditional: nn.Module,
                  k_diffusion: nn.Module,
                  mpd: nn.Module,
@@ -72,8 +52,8 @@ class First(pl.LightningModule):
         self.decoder = decoder
         self.text_encoder = text_encoder
         self.prosody_predictor = prosody_predictor
-        self.style_encoder = style_encoder
-        self.predictor_encoder = predictor_encoder
+        self.acoustic_style_encoder = acoustic_style_encoder
+        self.prosodic_style_encoder = prosodic_style_encoder
         self.k_diffusion = k_diffusion
         self.audio_diffusion_conditional = audio_diffusion_conditional
         self.msd = msd
@@ -93,6 +73,7 @@ class First(pl.LightningModule):
         
         self.loss_val = 0
         self.s2s_attn, self.en, self.gt, self.mel_input_length, self.waves = None, None, None, None, None
+        self.global_step_ = 0
 
     def forward(self, x):
         return x
@@ -106,8 +87,9 @@ class First(pl.LightningModule):
     #     print("on_after_backward exit")
 
     def training_step(self, batch, batch_idx):
-        optimizers = {}
-        optimizers['text_encoder'], optimizers['style_encoder'], optimizers['decoder'], optimizers['text_aligner'], optimizers['pitch_extractor'], optimizers['msd'], optimizers['mpd'] = self.optimizers()
+        optimizers, schedulers = {}, {}
+        optimizers['text_encoder'], optimizers['acoustic_style_encoder'], optimizers['decoder'], optimizers['text_aligner'], optimizers['pitch_extractor'], optimizers['msd'], optimizers['mpd'] = self.optimizers()
+        # schedulers['text_encoder'], schedulers['acoustic_style_encoder'], schedulers['decoder'], schedulers['text_aligner'], schedulers['pitch_extractor'], schedulers['msd'], schedulers['mpd'] = self.lr_schedulers()
         waves = batch[0]
         texts, input_lengths, _, _, mels, mel_input_length, _ = batch[1:]
 
@@ -180,7 +162,7 @@ class First(pl.LightningModule):
             real_norm = log_norm(gt.unsqueeze(1)).squeeze(1)
             F0_real, _, _ = self.pitch_extractor(gt.unsqueeze(1))
         
-        s = self.style_encoder(st.unsqueeze(1) if self.hparams.multispeaker else gt.unsqueeze(1))
+        s = self.acoustic_style_encoder(st.unsqueeze(1) if self.hparams.multispeaker else gt.unsqueeze(1))
 
         y_rec = self.decoder(en, F0_real, real_norm, s)
 
@@ -190,14 +172,14 @@ class First(pl.LightningModule):
             optimizers['mpd'].zero_grad()
             d_loss = self.dl(wav.unsqueeze(1).float(), y_rec.detach()).mean()
             self.manual_backward(d_loss)
-            optimizers['msd'].step()
-            optimizers['mpd'].step()
+            optimizers['msd'].step()#, schedulers['msd'].step()
+            optimizers['mpd'].step()#, schedulers['mpd'].step()
         else:
             d_loss = 0
         
         # generator loss
         optimizers['text_encoder'].zero_grad()
-        optimizers['style_encoder'].zero_grad()
+        optimizers['acoustic_style_encoder'].zero_grad()
         optimizers['decoder'].zero_grad()
         optimizers['text_aligner'].zero_grad()
         optimizers['pitch_extractor'].zero_grad()
@@ -213,9 +195,7 @@ class First(pl.LightningModule):
             loss_mono = F.l1_loss(s2s_attn, s2s_attn_mono) * 10
 
             loss_gen_all = self.gl(wav.unsqueeze(1).float(), y_rec).mean()
-            with torch.no_grad():
-                loss_slm = self.wl(wav, y_rec).mean()
-            # loss_slm = self.wl(wav.detach(), y_rec).mean()
+            loss_slm = self.wl(wav, y_rec).mean()
 
             g_loss = self.hparams.loss_params['lambda_mel'] * loss_mel + \
                 self.hparams.loss_params['lambda_mono'] * loss_mono + \
@@ -232,27 +212,34 @@ class First(pl.LightningModule):
 
         self.manual_backward(g_loss)
 
-        optimizers['text_encoder'].step()
-        optimizers['style_encoder'].step()
-        optimizers['decoder'].step()
+        optimizers['text_encoder'].step()#, schedulers['text_encoder'].step()
+        optimizers['acoustic_style_encoder'].step()#, schedulers['acoustic_style_encoder'].step()
+        optimizers['decoder'].step()#, schedulers['decoder'].step()
 
         if self.current_epoch >= self.hparams.epochs['TMA_epoch']:
-            optimizers['text_aligner'].step()
-            optimizers['pitch_extractor'].step()
+            optimizers['text_aligner'].step()#, schedulers['text_aligner'].step()
+            optimizers['pitch_extractor'].step()#, schedulers['pitch_extractor'].step()
         
         # print('Epoch [%d/%d], Step [%d/%d], Mel Loss: %.5f, Gen Loss: %.5f, Disc Loss: %.5f, Mono Loss: %.5f, S2S Loss: %.5f, SLM Loss: %.5f',
         #       self.current_epoch+1, self.trainer.max_epochs, batch_idx+1, len(self.trainer.datamodule.train_dataloader()), loss_mel, loss_gen_all, d_loss, loss_mono, loss_s2s, loss_slm)
-        # self.logger.log_metrics({'train/mel_loss': loss_mel, 'train/gen_loss': loss_gen_all, 'train/d_loss': d_loss, 'train/mono_loss': loss_mono, 'train/s2s_loss': loss_s2s, 'train/slm_loss': loss_slm}, step=self.global_step)
-        self.log('train/mel_loss', loss_mel, on_step=True, logger=True)
-        self.log('train/gen_loss', loss_gen_all, on_step=True,  logger=True)
-        self.log('train/d_loss', d_loss, on_step=True, logger=True)
-        self.log('train/mono_loss', loss_mono, on_step=True, logger=True)
-        self.log('train/s2s_loss', loss_s2s, on_step=True, logger=True)
-        self.log('train/slm_loss', loss_slm, on_step=True, logger=True)
+        self.trainer.logger.log_metrics({'train/mel_loss': loss_mel,
+                                 'train/gen_loss': loss_gen_all,
+                                 'train/d_loss': d_loss,
+                                 'train/mono_loss': loss_mono,
+                                 'train/s2s_loss': loss_s2s,
+                                 'train/slm_loss': loss_slm,
+                                 'train/text_encoder/lr': optimizers['text_encoder'].param_groups[0]['lr']}, step=self.global_step_)
+        # self.log('train/mel_loss', loss_mel, on_step=True, logger=True)
+        # self.log('train/gen_loss', loss_gen_all, on_step=True,  logger=True)
+        # self.log('train/d_loss', d_loss, on_step=True, logger=True)
+        # self.log('train/mono_loss', loss_mono, on_step=True, logger=True)
+        # self.log('train/s2s_loss', loss_s2s, on_step=True, logger=True)
+        # self.log('train/slm_loss', loss_slm, on_step=True, logger=True)
+        # # log learning rate
+        # self.log('train/text_encoder/lr', optimizers['text_encoder'].param_groups[0]['lr'], on_step=True, logger=True)
+        self.global_step_ += 1
     
     def validation_step(self, batch, batch_idx):
-        for optimizer in self.optimizers(): optimizer.zero_grad()
-
         waves = batch[0]
         texts, input_lengths, _, _, mels, mel_input_length, _ = batch[1:]
 
@@ -297,7 +284,7 @@ class First(pl.LightningModule):
         gt = torch.stack(gt)
 
         F0_real, _, F0 = self.pitch_extractor(gt.unsqueeze(1))
-        s = self.style_encoder(gt.unsqueeze(1))
+        s = self.acoustic_style_encoder(gt.unsqueeze(1))
         real_norm = log_norm(gt.unsqueeze(1)).squeeze(1)
         y_rec = self.decoder(en, F0_real, real_norm, s)
 
@@ -308,11 +295,16 @@ class First(pl.LightningModule):
             self.s2s_attn, self.en, self.gt, self.mel_input_length, self.waves = s2s_attn, en, gt, mel_input_length, waves
     
     def on_validation_epoch_end(self):
-        print('Epochs [%d/%d], Val Mel Loss: %.5f', self.current_epoch+1, self.trainer.max_epochs, self.loss_val / len(self.trainer.datamodule.val_dataloader()))
+
         self.log('val/mel_loss', self.loss_val / len(self.trainer.datamodule.val_dataloader()), logger=True, sync_dist=True)
 
-        attn_image = get_image(self.s2s_attn[0].cpu().numpy().squeeze())
-        self.logger.log_image(key='val/attn', images=[attn_image], caption=[self.current_epoch])
+        # attn_image = get_image(self.s2s_attn[0].cpu().numpy().squeeze())
+        # image shape has to be H,W,C(=1 if greyscale)
+        # self.trainer.logger.log_image(key='val/attn', images=[self.s2s_attn[0].cpu().numpy()], caption=[str(self.global_step_)])
+        # self.trainer.logger.experiment.log({
+        #     'val/attn': wandb.Image(self.s2s_attn[0].cpu().numpy(), caption=str(self.global_step_)),
+        # })
+        self.trainer.logger.log_metrics({'val/attn' : [wandb.Image(self.s2s_attn[0].cpu().numpy(), caption=str(self.global_step_))]})
 
         for bib in range(len(self.en)):
             mel_length = int(self.mel_input_length[bib].item())
@@ -321,13 +313,21 @@ class First(pl.LightningModule):
 
             F0_real, _, _ = self.pitch_extractor(gt.unsqueeze(1))
             # F0_real = F0_real.unsqueeze(0)
-            s = self.style_encoder(gt.unsqueeze(1))
+            s = self.acoustic_style_encoder(gt.unsqueeze(1))
             real_norm = log_norm(gt.unsqueeze(1)).squeeze(1)
             y_rec = self.decoder(en, F0_real, real_norm, s)
 
-            self.logger.log_audio(key='val/y_' + str(bib), audios=[y_rec.squeeze().cpu().numpy()], sample_rate=[self.hparams.sr], caption=[self.current_epoch])
+            # self.trainer.logger.log_audio(key='val/y_' + str(bib), audios=[y_rec.squeeze().cpu().numpy()], sample_rate=[self.hparams.sr], caption=[str(self.global_step_)])
+            # self.trainer.logger.experiment.log({
+            #     'val/y_' + str(bib): wandb.Audio(y_rec.squeeze().cpu().numpy(), sample_rate=self.hparams.sr, caption=str(self.global_step_)),
+            # })
+            self.trainer.logger.log_metrics({'val/y_' + str(bib): [wandb.Audio(y_rec.squeeze().cpu().numpy(), sample_rate=self.hparams.sr, caption=str(self.global_step_))]})
             if self.current_epoch == 0:
-                self.logger.log_audio(key='val/gt_' + str(bib), audios=[self.waves[bib].squeeze()], sample_rate=[self.hparams.sr], caption=[self.current_epoch])
+                # self.trainer.logger.log_audio(key='val/gt_' + str(bib), audios=[self.waves[bib]], sample_rate=[self.hparams.sr], caption=[str(self.global_step_)])
+                # self.trainer.logger.experiment.log({
+                #     'val/gt_' + str(bib): wandb.Audio(gt.squeeze().cpu().numpy(), sample_rate=self.hparams.sr, caption=str(self.global_step_)),
+                # })
+                self.trainer.logger.log_metrics({'val/gt_' + str(bib): [wandb.Audio(self.waves[bib], sample_rate=self.hparams.sr, caption=str(self.global_step_))]})
 
             if bib >= 6: break
 
@@ -336,20 +336,21 @@ class First(pl.LightningModule):
 
     def configure_optimizers(self):
         optimizers = [self.optimizer(model.parameters()) for model in [self.text_encoder,
-                                                      self.style_encoder,
+                                                      self.acoustic_style_encoder,
                                                       self.decoder,
                                                       self.text_aligner,
                                                       self.pitch_extractor,
                                                       self.msd,
                                                       self.mpd]]
-        schedulers = [torch.optim.lr_scheduler.OneCycleLR(
-            optimizer,
-            max_lr=1.0e-4,
-            steps_per_epoch=len(self.trainer.datamodule.train_dataloader()),
-            epochs=self.trainer.max_epochs,
-            pct_start=0.0,
-            div_factor=1,
-            final_div_factor=1,
-        ) for optimizer in optimizers]
+        # schedulers = [torch.optim.lr_scheduler.OneCycleLR(
+        #     optimizer,
+        #     max_lr=1.0e-4,
+        #     steps_per_epoch=len(self.trainer.datamodule.train_dataloader()),
+        #     epochs=self.trainer.max_epochs,
+        #     pct_start=0.0,
+        #     div_factor=1,
+        #     final_div_factor=1,
+        # ) for optimizer in optimizers]
 
-        return [{"optimizer": optimizer, "lr_scheduler": {"scheduler": scheduler, "interval": "step"}} for optimizer, scheduler in zip(optimizers, schedulers)]
+        # return [{"optimizer": optimizer, "lr_scheduler": {"scheduler": scheduler, "interval": "step"}} for optimizer, scheduler in zip(optimizers, schedulers)]
+        return optimizers

@@ -1093,3 +1093,11 @@ INFO:2025-01-30 19:43:21,080: Epoch [1/200], Step [190/12500], Mel Loss: 0.68922
 INFO:2025-01-30 19:43:52,113: Epoch [1/200], Step [200/12500], Mel Loss: 0.66838, Gen Loss: 5.93824, Disc Loss: 3.77163, Mono Loss: 0.10229, S2S Loss: 0.93746, SLM Loss: 2.76198
 INFO:2025-01-30 19:44:22,030: Epoch [1/200], Step [210/12500], Mel Loss: 0.62744, Gen Loss: 4.98021, Disc Loss: 3.68455, Mono Loss: 0.09418, S2S Loss: 1.04498, SLM Loss: 2.74914
 INFO:2025-01-30 19:44:51,726: Epoch [1/200], Step [220/12500], Mel Loss: 0.61782, Gen Loss: 5.21428, Disc Loss: 3.70304, Mono Loss: 0.24337, S2S Loss: 0.98388, SLM Loss: 2.67238
+INFO:2025-01-30 23:35:25,943: Epoch [1/200], Step [10/12500], Mel Loss: 1.35492, Gen Loss: 0.00000, Disc Loss: 0.00000, Mono Loss: 0.00000, S2S Loss: 0.00000, SLM Loss: 0.00000
+INFO:2025-01-30 23:35:32,654: Epoch [1/200], Step [20/12500], Mel Loss: 0.81130, Gen Loss: 0.00000, Disc Loss: 0.00000, Mono Loss: 0.00000, S2S Loss: 0.00000, SLM Loss: 0.00000
+INFO:2025-01-30 23:35:39,054: Epoch [1/200], Step [30/12500], Mel Loss: 0.72406, Gen Loss: 0.00000, Disc Loss: 0.00000, Mono Loss: 0.00000, S2S Loss: 0.00000, SLM Loss: 0.00000
+INFO:2025-01-30 23:35:45,098: Epoch [1/200], Step [40/12500], Mel Loss: 0.69311, Gen Loss: 0.00000, Disc Loss: 0.00000, Mono Loss: 0.00000, S2S Loss: 0.00000, SLM Loss: 0.00000
+INFO:2025-01-30 23:35:51,611: Epoch [1/200], Step [50/12500], Mel Loss: 0.68060, Gen Loss: 0.00000, Disc Loss: 0.00000, Mono Loss: 0.00000, S2S Loss: 0.00000, SLM Loss: 0.00000
+INFO:2025-01-30 23:35:57,235: Epoch [1/200], Step [60/12500], Mel Loss: 0.66943, Gen Loss: 0.00000, Disc Loss: 0.00000, Mono Loss: 0.00000, S2S Loss: 0.00000, SLM Loss: 0.00000
+INFO:2025-01-30 23:36:03,383: Epoch [1/200], Step [70/12500], Mel Loss: 0.67747, Gen Loss: 0.00000, Disc Loss: 0.00000, Mono Loss: 0.00000, S2S Loss: 0.00000, SLM Loss: 0.00000
+INFO:2025-01-30 23:36:08,938: Epoch [1/200], Step [80/12500], Mel Loss: 0.65297, Gen Loss: 0.00000, Disc Loss: 0.00000, Mono Loss: 0.00000, S2S Loss: 0.00000, SLM Loss: 0.00000
