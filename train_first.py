@@ -99,12 +99,12 @@ def main(config_path):
                                       dataset_config={})
     
     with accelerator.main_process_first():
-        # load pretrained ASR model
+        # load pretrained ASR model (initially trained on ASR task using LibriSpeech corpus, fine-tuned concurrently with decoder)
         ASR_config = config.get('ASR_config', False)
         ASR_path = config.get('ASR_path', False)
         text_aligner = load_ASR_models(ASR_path, ASR_config)
 
-        # load pretrained F0 model
+        # load pretrained F0 model (initially trained with ground truth F0 (YIN) using LibriSpeech corpus, fine-tuned concurrently with decoder)
         F0_path = config.get('F0_path', False)
         pitch_extractor = load_F0_models(F0_path)
 
@@ -265,7 +265,7 @@ def main(config_path):
                 real_norm = log_norm(gt.unsqueeze(1)).squeeze(1).detach()
                 F0_real, _, _ = model.pitch_extractor(gt.unsqueeze(1))
                 
-            s = model.style_encoder(st.unsqueeze(1) if multispeaker else gt.unsqueeze(1))
+            s = model.acoustic_style_encoder(st.unsqueeze(1) if multispeaker else gt.unsqueeze(1)) # But why input same gt for single speaker case?
             
             y_rec = model.decoder(en, F0_real, real_norm, s)
             
@@ -313,7 +313,7 @@ def main(config_path):
             accelerator.backward(g_loss)
             
             optimizer.step('text_encoder')
-            optimizer.step('style_encoder')
+            optimizer.step('acoustic_style_encoder')
             optimizer.step('decoder')
             
             if epoch >= TMA_epoch: 
@@ -391,7 +391,7 @@ def main(config_path):
                 gt = torch.stack(gt).detach()
 
                 F0_real, _, F0 = model.pitch_extractor(gt.unsqueeze(1))
-                s = model.style_encoder(gt.unsqueeze(1))
+                s = model.acoustic_style_encoder(gt.unsqueeze(1))
                 real_norm = log_norm(gt.unsqueeze(1)).squeeze(1)
                 y_rec = model.decoder(en, F0_real, real_norm, s)
 
@@ -416,7 +416,7 @@ def main(config_path):
                                         
                     F0_real, _, _ = model.pitch_extractor(gt.unsqueeze(1))
                     F0_real = F0_real.unsqueeze(0)
-                    s = model.style_encoder(gt.unsqueeze(1))
+                    s = model.acoustic_style_encoder(gt.unsqueeze(1))
                     real_norm = log_norm(gt.unsqueeze(1)).squeeze(1)
                     
                     y_rec = model.decoder(en, F0_real, real_norm, s)

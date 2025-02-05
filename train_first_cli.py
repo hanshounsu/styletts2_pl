@@ -43,18 +43,19 @@ class StyleTTS2CLI(LightningCLI):
                                    project="StyleTTS2",
                                    offline=(not self.config.fit.wandb),
                                    id=id)
-        self.trainer.logger = wandb_logger
+        self.trainer.logger = wandb_logger # TODO: Change this to tensorboard, as image, audio are not loaded properly.
 
         # Model checkpoint (automatically called after validation)
         model_checkpoint_callback = ModelCheckpoint(
             dirpath=f'./checkpoints/{self.now}',
-            monitor='',
+            monitor='val/mel_loss',
             mode='min',
             save_top_k=20,
             save_last=True,
             verbose=True,
+            # every_n_train_steps=35, # for debugging
             save_on_train_epoch_end=True,
-            filename='{step:07}-{val/diffusion_loss:.4f}')  # python recognized '/', '-' as '_'
+            filename='{step:07}-{val/mel_loss:.4f}')  # python recognized '/', '-' as '_'
 
         self.trainer.callbacks.append(model_checkpoint_callback)
         self.config.fit.test_save_path = f"./results/{self.now}"

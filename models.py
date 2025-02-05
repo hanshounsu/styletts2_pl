@@ -437,7 +437,7 @@ class AdaLayerNorm(nn.Module):
         x = (1 + gamma) * x + beta
         return x.transpose(1, -1).transpose(-1, -2)
 
-class ProsodyPredictor(nn.Module):
+class DurationProsodyPredictor(nn.Module):
 
     def __init__(self, style_dim, d_hid, nlayers, max_dur=50, dropout=0.1):
         super().__init__() 
@@ -466,7 +466,7 @@ class ProsodyPredictor(nn.Module):
 
 
     def forward(self, texts, style, text_lengths, alignment, m):
-        d = self.text_encoder(texts, style, text_lengths, m)
+        d = self.text_encoder(texts, style, text_lengths, m) # texts : [B, emb1, T], style : [B, emb2], alignment : [B, T, L]
         
         batch_size = d.shape[0]
         text_size = d.shape[1]
@@ -474,7 +474,7 @@ class ProsodyPredictor(nn.Module):
         # predict duration
         input_lengths = text_lengths.cpu().numpy()
         x = nn.utils.rnn.pack_padded_sequence(
-            d, input_lengths, batch_first=True, enforce_sorted=False)
+            d, input_lengths, batch_first=True, enforce_sorted=False) # pad d to the maximum length,
         
         m = m.to(text_lengths.device).unsqueeze(1)
         
@@ -633,10 +633,10 @@ def build_model(args, text_aligner, pitch_extractor, bert):
         
     text_encoder = TextEncoder(channels=args.hidden_dim, kernel_size=5, depth=args.n_layer, n_symbols=args.n_token)
     
-    predictor = ProsodyPredictor(style_dim=args.style_dim, d_hid=args.hidden_dim, nlayers=args.n_layer, max_dur=args.max_dur, dropout=args.dropout)
+    duration_prosody_predictor = DurationProsodyPredictor(style_dim=args.style_dim, d_hid=args.hidden_dim, nlayers=args.n_layer, max_dur=args.max_dur, dropout=args.dropout)
     
-    style_encoder = StyleEncoder(dim_in=args.dim_in, style_dim=args.style_dim, max_conv_dim=args.hidden_dim) # acoustic style encoder
-    predictor_encoder = StyleEncoder(dim_in=args.dim_in, style_dim=args.style_dim, max_conv_dim=args.hidden_dim) # prosodic style encoder
+    acoustic_style_encoder = StyleEncoder(dim_in=args.dim_in, style_dim=args.style_dim, max_conv_dim=args.hidden_dim) # acoustic style encoder
+    prosodic_style_encoder = StyleEncoder(dim_in=args.dim_in, style_dim=args.style_dim, max_conv_dim=args.hidden_dim) # prosodic style encoder
         
     # define diffusion model
     if args.multispeaker:
@@ -672,12 +672,12 @@ def build_model(args, text_aligner, pitch_extractor, bert):
             bert=bert,
             bert_encoder=nn.Linear(bert.config.hidden_size, args.hidden_dim),
 
-            predictor=predictor,
+            duration_prosody_predictor=duration_prosody_predictor,
             decoder=decoder,
             text_encoder=text_encoder,
 
-            predictor_encoder=predictor_encoder,
-            style_encoder=style_encoder,
+            prosodic_style_encoder=prosodic_style_encoder,
+            acoustic_style_encoder=acoustic_style_encoder,
             diffusion=diffusion,
 
             text_aligner = text_aligner,

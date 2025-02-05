@@ -6,4 +6,5 @@ logs/
 Models/LJSpeech/
 
 # *.pth
+*.ckpt
 # *.t7

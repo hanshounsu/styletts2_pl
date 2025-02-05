@@ -14,7 +14,7 @@ trainer:
   strategy: ddp_find_unused_parameters_true
   log_every_n_steps: 10
   # check_val_every_n_epoch: 1
-  val_check_interval: 0.25
+  val_check_interval: 0.5
   enable_checkpointing: False
   # num_sanity_val_steps: 0
   max_epochs: &epochs 200
@@ -46,7 +46,7 @@ model:
     lambda_diff: 1. # score matching loss (2nd stage)
     
   epochs:
-    TMA_epoch: 0 # TMA starting epoch (1st stage)
+    TMA_epoch: 50 # TMA starting epoch (1st stage)
 
   slm:
     model: 'microsoft/wavlm-base-plus'
@@ -94,7 +94,7 @@ model:
       n_symbols: &n_token 178
   
   prosody_predictor:
-    class_path: models.ProsodyPredictor
+    class_path: models.DurationProsodyPredictor
     init_args:
       style_dim: *style_dim
       d_hid: *hidden_dim
@@ -102,14 +102,14 @@ model:
       max_dur: &max_dur 50
       dropout: &dropout 0.2
   
-  style_encoder:
+  acoustic_style_encoder:
     class_path: models.StyleEncoder
     init_args:
       dim_in: &dim_in 64
       style_dim: *style_dim
       max_conv_dim: *hidden_dim
   
-  predictor_encoder:
+  prosodic_style_encoder:
     class_path: models.StyleEncoder
     init_args:
       dim_in: *dim_in

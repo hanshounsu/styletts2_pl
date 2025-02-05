@@ -150,14 +150,14 @@ def main(config_path):
                 None, 
                 first_stage_path,
                 load_only_params=True,
-                ignore_modules=['bert', 'bert_encoder', 'predictor', 'predictor_encoder', 'msd', 'mpd', 'wd', 'diffusion']) # keep starting epoch for tensorboard log
+                ignore_modules=['bert', 'bert_encoder', 'predictor', 'prosodic_style_encoder', 'msd', 'mpd', 'wd', 'diffusion']) # keep starting epoch for tensorboard log
 
             # these epochs should be counted from the start epoch
             diff_epoch += start_epoch
             joint_epoch += start_epoch
             epochs += start_epoch
             
-            model.predictor_encoder = copy.deepcopy(model.style_encoder)
+            model.prosodic_style_encoder = copy.deepcopy(model.acoustic_style_encoder)
         else:
             raise ValueError('You need to specify the path to the first stage model.') 
 
@@ -188,7 +188,7 @@ def main(config_path):
     scheduler_params_dict= {key: scheduler_params.copy() for key in model}
     scheduler_params_dict['bert']['max_lr'] = optimizer_params.bert_lr * 2
     scheduler_params_dict['decoder']['max_lr'] = optimizer_params.ft_lr * 2
-    scheduler_params_dict['style_encoder']['max_lr'] = optimizer_params.ft_lr * 2
+    scheduler_params_dict['acoustic_style_encoder']['max_lr'] = optimizer_params.ft_lr * 2
     
     optimizer = build_optimizer({key: model[key].parameters() for key in model},
                                           scheduler_params_dict=scheduler_params_dict, lr=optimizer_params.lr)
@@ -202,7 +202,7 @@ def main(config_path):
         g['weight_decay'] = 0.01
         
     # adjust acoustic module learning rate
-    for module in ["decoder", "style_encoder"]:
+    for module in ["decoder", "acoustic_style_encoder"]:
         for g in optimizer.optimizers[module].param_groups:
             g['betas'] = (0.0, 0.99)
             g['lr'] = optimizer_params.ft_lr
@@ -273,8 +273,8 @@ def main(config_path):
 
                 # compute reference styles
                 if multispeaker and epoch >= diff_epoch:
-                    ref_ss = model.style_encoder(ref_mels.unsqueeze(1))
-                    ref_sp = model.predictor_encoder(ref_mels.unsqueeze(1))
+                    ref_ss = model.acoustic_style_encoder(ref_mels.unsqueeze(1))
+                    ref_sp = model.prosodic_style_encoder(ref_mels.unsqueeze(1))
                     ref = torch.cat([ref_ss, ref_sp], dim=1)
                 
             try:
@@ -306,9 +306,9 @@ def main(config_path):
             for bib in range(len(mel_input_length)):
                 mel_length = int(mel_input_length[bib].item())
                 mel = mels[bib, :, :mel_input_length[bib]]
-                s = model.predictor_encoder(mel.unsqueeze(0).unsqueeze(1))
+                s = model.prosodic_style_encoder(mel.unsqueeze(0).unsqueeze(1))
                 ss.append(s)
-                s = model.style_encoder(mel.unsqueeze(0).unsqueeze(1))
+                s = model.acoustic_style_encoder(mel.unsqueeze(0).unsqueeze(1))
                 gs.append(s)
 
             s_dur = torch.stack(ss).squeeze()  # global prosodic styles
@@ -390,8 +390,8 @@ def main(config_path):
             if gt.size(-1) < 80:
                 continue
             
-            s = model.style_encoder(gt.unsqueeze(1))           
-            s_dur = model.predictor_encoder(gt.unsqueeze(1))
+            s = model.acoustic_style_encoder(gt.unsqueeze(1))           
+            s_dur = model.prosodic_style_encoder(gt.unsqueeze(1))
                 
             with torch.no_grad():
                 F0_real, _, F0 = model.pitch_extractor(gt.unsqueeze(1))
@@ -469,8 +469,8 @@ def main(config_path):
             optimizer.step('bert_encoder')
             optimizer.step('bert')
             optimizer.step('predictor')
-            optimizer.step('predictor_encoder')
-            optimizer.step('style_encoder')
+            optimizer.step('prosodic_style_encoder')
+            optimizer.step('acoustic_style_encoder')
             optimizer.step('decoder')
             
             optimizer.step('text_encoder')
@@ -607,9 +607,9 @@ def main(config_path):
                     for bib in range(len(mel_input_length)):
                         mel_length = int(mel_input_length[bib].item())
                         mel = mels[bib, :, :mel_input_length[bib]]
-                        s = model.predictor_encoder(mel.unsqueeze(0).unsqueeze(1))
+                        s = model.prosodic_style_encoder(mel.unsqueeze(0).unsqueeze(1))
                         ss.append(s)
-                        s = model.style_encoder(mel.unsqueeze(0).unsqueeze(1))
+                        s = model.acoustic_style_encoder(mel.unsqueeze(0).unsqueeze(1))
                         gs.append(s)
 
                     s = torch.stack(ss).squeeze()
@@ -646,7 +646,7 @@ def main(config_path):
                     en = torch.stack(en)
                     p_en = torch.stack(p_en)
                     gt = torch.stack(gt).detach()
-                    s = model.predictor_encoder(gt.unsqueeze(1))
+                    s = model.prosodic_style_encoder(gt.unsqueeze(1))
 
                     F0_fake, N_fake = model.predictor.F0Ntrain(p_en, s)
 
@@ -663,7 +663,7 @@ def main(config_path):
 
                     loss_dur /= texts.size(0)
 
-                    s = model.style_encoder(gt.unsqueeze(1))
+                    s = model.acoustic_style_encoder(gt.unsqueeze(1))
 
                     y_rec = model.decoder(en, F0_fake, N_fake, s)
                     loss_mel = stft_loss(y_rec.squeeze(), wav.detach())
