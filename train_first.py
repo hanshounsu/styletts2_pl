@@ -199,7 +199,7 @@ def main(config_path):
             
             with torch.no_grad():
                 mask = length_to_mask(mel_input_length // (2 ** n_down)).to('cuda')
-                text_mask = length_to_mask(input_lengths).to(texts.device)
+                text_mask = length_to_mask(input_lengths).to(texts.device) # mask for considering padded values
 
             ppgs, s2s_pred, s2s_attn = model.text_aligner(mels, mask, texts) # mask length is halved by 2 ** n_down (but why??? (240122 hounsu))
 
@@ -343,7 +343,7 @@ def main(config_path):
 
         with torch.no_grad():
             iters_test = 0
-            for batch_idx, batch in enumerate(val_dataloader):
+            for batch_idx, batch in enumerate(tqdm(val_dataloader, desc='Validation')):
                 optimizer.zero_grad()
 
                 waves = batch[0]
@@ -415,7 +415,6 @@ def main(config_path):
                     en = asr[bib, :, :mel_length // 2].unsqueeze(0)
                                         
                     F0_real, _, _ = model.pitch_extractor(gt.unsqueeze(1))
-                    F0_real = F0_real.unsqueeze(0)
                     s = model.acoustic_style_encoder(gt.unsqueeze(1))
                     real_norm = log_norm(gt.unsqueeze(1)).squeeze(1)
                     

@@ -1101,3 +1101,70 @@ INFO:2025-01-30 23:35:51,611: Epoch [1/200], Step [50/12500], Mel Loss: 0.68060,
 INFO:2025-01-30 23:35:57,235: Epoch [1/200], Step [60/12500], Mel Loss: 0.66943, Gen Loss: 0.00000, Disc Loss: 0.00000, Mono Loss: 0.00000, S2S Loss: 0.00000, SLM Loss: 0.00000
 INFO:2025-01-30 23:36:03,383: Epoch [1/200], Step [70/12500], Mel Loss: 0.67747, Gen Loss: 0.00000, Disc Loss: 0.00000, Mono Loss: 0.00000, S2S Loss: 0.00000, SLM Loss: 0.00000
 INFO:2025-01-30 23:36:08,938: Epoch [1/200], Step [80/12500], Mel Loss: 0.65297, Gen Loss: 0.00000, Disc Loss: 0.00000, Mono Loss: 0.00000, S2S Loss: 0.00000, SLM Loss: 0.00000
+INFO:2025-02-05 11:04:04,735: Epoch [1/200], Step [10/6250], Mel Loss: 1.37792, Gen Loss: 0.00000, Disc Loss: 0.00000, Mono Loss: 0.00000, S2S Loss: 0.00000, SLM Loss: 0.00000
+INFO:2025-02-05 11:04:08,666: Epoch [1/200], Step [20/6250], Mel Loss: 0.82163, Gen Loss: 0.00000, Disc Loss: 0.00000, Mono Loss: 0.00000, S2S Loss: 0.00000, SLM Loss: 0.00000
+INFO:2025-02-05 11:05:07,075: Epoch [1/200], Step [10/6250], Mel Loss: 1.39712, Gen Loss: 0.00000, Disc Loss: 0.00000, Mono Loss: 0.00000, S2S Loss: 0.00000, SLM Loss: 0.00000
+INFO:2025-02-05 11:05:10,930: Epoch [1/200], Step [20/6250], Mel Loss: 0.82985, Gen Loss: 0.00000, Disc Loss: 0.00000, Mono Loss: 0.00000, S2S Loss: 0.00000, SLM Loss: 0.00000
+INFO:2025-02-05 11:05:14,031: Epoch [1/200], Step [30/6250], Mel Loss: 0.73210, Gen Loss: 0.00000, Disc Loss: 0.00000, Mono Loss: 0.00000, S2S Loss: 0.00000, SLM Loss: 0.00000
+INFO:2025-02-05 11:05:17,702: Epoch [1/200], Step [40/6250], Mel Loss: 0.69455, Gen Loss: 0.00000, Disc Loss: 0.00000, Mono Loss: 0.00000, S2S Loss: 0.00000, SLM Loss: 0.00000
+INFO:2025-02-05 11:05:21,874: Epoch [1/200], Step [50/6250], Mel Loss: 0.67664, Gen Loss: 0.00000, Disc Loss: 0.00000, Mono Loss: 0.00000, S2S Loss: 0.00000, SLM Loss: 0.00000
+INFO:2025-02-05 11:05:30,000: Validation loss: 0.673
+
+
+
+
+INFO:2025-02-05 11:07:41,047: Epoch [1/200], Step [10/6250], Mel Loss: 1.33576, Gen Loss: 0.00000, Disc Loss: 0.00000, Mono Loss: 0.00000, S2S Loss: 0.00000, SLM Loss: 0.00000
+INFO:2025-02-05 11:07:44,746: Epoch [1/200], Step [20/6250], Mel Loss: 0.81094, Gen Loss: 0.00000, Disc Loss: 0.00000, Mono Loss: 0.00000, S2S Loss: 0.00000, SLM Loss: 0.00000
+INFO:2025-02-05 11:07:48,142: Epoch [1/200], Step [30/6250], Mel Loss: 0.74964, Gen Loss: 0.00000, Disc Loss: 0.00000, Mono Loss: 0.00000, S2S Loss: 0.00000, SLM Loss: 0.00000
+INFO:2025-02-05 11:07:51,767: Epoch [1/200], Step [40/6250], Mel Loss: 0.69470, Gen Loss: 0.00000, Disc Loss: 0.00000, Mono Loss: 0.00000, S2S Loss: 0.00000, SLM Loss: 0.00000
+INFO:2025-02-05 11:07:55,901: Epoch [1/200], Step [50/6250], Mel Loss: 0.68867, Gen Loss: 0.00000, Disc Loss: 0.00000, Mono Loss: 0.00000, S2S Loss: 0.00000, SLM Loss: 0.00000
+INFO:2025-02-05 11:12:13,010: Epoch [1/200], Step [10/6250], Mel Loss: 1.35068, Gen Loss: 0.00000, Disc Loss: 0.00000, Mono Loss: 0.00000, S2S Loss: 0.00000, SLM Loss: 0.00000
+INFO:2025-02-05 11:12:16,817: Epoch [1/200], Step [20/6250], Mel Loss: 0.84281, Gen Loss: 0.00000, Disc Loss: 0.00000, Mono Loss: 0.00000, S2S Loss: 0.00000, SLM Loss: 0.00000
+INFO:2025-02-05 11:12:20,322: Epoch [1/200], Step [30/6250], Mel Loss: 0.71289, Gen Loss: 0.00000, Disc Loss: 0.00000, Mono Loss: 0.00000, S2S Loss: 0.00000, SLM Loss: 0.00000
+INFO:2025-02-05 11:12:24,194: Epoch [1/200], Step [40/6250], Mel Loss: 0.68448, Gen Loss: 0.00000, Disc Loss: 0.00000, Mono Loss: 0.00000, S2S Loss: 0.00000, SLM Loss: 0.00000
+INFO:2025-02-05 11:12:28,507: Epoch [1/200], Step [50/6250], Mel Loss: 0.67209, Gen Loss: 0.00000, Disc Loss: 0.00000, Mono Loss: 0.00000, S2S Loss: 0.00000, SLM Loss: 0.00000
+INFO:2025-02-05 11:12:43,870: Validation loss: 0.655
+
+
+
+
+INFO:2025-02-05 11:13:18,203: Epoch [1/200], Step [10/6250], Mel Loss: 1.31459, Gen Loss: 0.00000, Disc Loss: 0.00000, Mono Loss: 0.00000, S2S Loss: 0.00000, SLM Loss: 0.00000
+INFO:2025-02-05 11:13:22,169: Epoch [1/200], Step [20/6250], Mel Loss: 0.79951, Gen Loss: 0.00000, Disc Loss: 0.00000, Mono Loss: 0.00000, S2S Loss: 0.00000, SLM Loss: 0.00000
+INFO:2025-02-05 11:13:25,439: Epoch [1/200], Step [30/6250], Mel Loss: 0.73287, Gen Loss: 0.00000, Disc Loss: 0.00000, Mono Loss: 0.00000, S2S Loss: 0.00000, SLM Loss: 0.00000
+INFO:2025-02-05 11:13:28,967: Epoch [1/200], Step [40/6250], Mel Loss: 0.69964, Gen Loss: 0.00000, Disc Loss: 0.00000, Mono Loss: 0.00000, S2S Loss: 0.00000, SLM Loss: 0.00000
+INFO:2025-02-05 11:13:33,174: Epoch [1/200], Step [50/6250], Mel Loss: 0.66544, Gen Loss: 0.00000, Disc Loss: 0.00000, Mono Loss: 0.00000, S2S Loss: 0.00000, SLM Loss: 0.00000
+INFO:2025-02-05 11:13:46,131: Validation loss: 0.692
+
+
+
+
+INFO:2025-02-05 11:15:25,166: Epoch [1/200], Step [10/6250], Mel Loss: 1.28205, Gen Loss: 0.00000, Disc Loss: 0.00000, Mono Loss: 0.00000, S2S Loss: 0.00000, SLM Loss: 0.00000
+INFO:2025-02-05 11:15:29,100: Epoch [1/200], Step [20/6250], Mel Loss: 0.80308, Gen Loss: 0.00000, Disc Loss: 0.00000, Mono Loss: 0.00000, S2S Loss: 0.00000, SLM Loss: 0.00000
+INFO:2025-02-05 11:15:32,744: Epoch [1/200], Step [30/6250], Mel Loss: 0.71744, Gen Loss: 0.00000, Disc Loss: 0.00000, Mono Loss: 0.00000, S2S Loss: 0.00000, SLM Loss: 0.00000
+INFO:2025-02-05 11:15:36,349: Epoch [1/200], Step [40/6250], Mel Loss: 0.74009, Gen Loss: 0.00000, Disc Loss: 0.00000, Mono Loss: 0.00000, S2S Loss: 0.00000, SLM Loss: 0.00000
+INFO:2025-02-05 11:15:40,303: Epoch [1/200], Step [50/6250], Mel Loss: 0.71768, Gen Loss: 0.00000, Disc Loss: 0.00000, Mono Loss: 0.00000, S2S Loss: 0.00000, SLM Loss: 0.00000
+INFO:2025-02-05 11:15:48,368: Validation loss: 0.691
+
+
+
+
+INFO:2025-02-05 11:16:36,916: Epoch [1/200], Step [10/6250], Mel Loss: 1.47058, Gen Loss: 0.00000, Disc Loss: 0.00000, Mono Loss: 0.00000, S2S Loss: 0.00000, SLM Loss: 0.00000
+INFO:2025-02-05 11:16:40,635: Epoch [1/200], Step [20/6250], Mel Loss: 0.88427, Gen Loss: 0.00000, Disc Loss: 0.00000, Mono Loss: 0.00000, S2S Loss: 0.00000, SLM Loss: 0.00000
+INFO:2025-02-05 11:16:44,109: Epoch [1/200], Step [30/6250], Mel Loss: 0.73271, Gen Loss: 0.00000, Disc Loss: 0.00000, Mono Loss: 0.00000, S2S Loss: 0.00000, SLM Loss: 0.00000
+INFO:2025-02-05 11:16:48,019: Epoch [1/200], Step [40/6250], Mel Loss: 0.69718, Gen Loss: 0.00000, Disc Loss: 0.00000, Mono Loss: 0.00000, S2S Loss: 0.00000, SLM Loss: 0.00000
+INFO:2025-02-05 11:16:52,080: Epoch [1/200], Step [50/6250], Mel Loss: 0.69683, Gen Loss: 0.00000, Disc Loss: 0.00000, Mono Loss: 0.00000, S2S Loss: 0.00000, SLM Loss: 0.00000
+INFO:2025-02-05 11:17:00,328: Validation loss: 0.683
+
+
+
+
+INFO:2025-02-05 11:22:13,092: Epoch [1/200], Step [10/6250], Mel Loss: 1.31865, Gen Loss: 0.00000, Disc Loss: 0.00000, Mono Loss: 0.00000, S2S Loss: 0.00000, SLM Loss: 0.00000
+INFO:2025-02-05 11:22:16,790: Epoch [1/200], Step [20/6250], Mel Loss: 0.84564, Gen Loss: 0.00000, Disc Loss: 0.00000, Mono Loss: 0.00000, S2S Loss: 0.00000, SLM Loss: 0.00000
+INFO:2025-02-05 11:22:20,222: Epoch [1/200], Step [30/6250], Mel Loss: 0.71951, Gen Loss: 0.00000, Disc Loss: 0.00000, Mono Loss: 0.00000, S2S Loss: 0.00000, SLM Loss: 0.00000
+INFO:2025-02-05 11:22:24,053: Epoch [1/200], Step [40/6250], Mel Loss: 0.70437, Gen Loss: 0.00000, Disc Loss: 0.00000, Mono Loss: 0.00000, S2S Loss: 0.00000, SLM Loss: 0.00000
+INFO:2025-02-05 11:22:28,177: Epoch [1/200], Step [50/6250], Mel Loss: 0.68738, Gen Loss: 0.00000, Disc Loss: 0.00000, Mono Loss: 0.00000, S2S Loss: 0.00000, SLM Loss: 0.00000
+INFO:2025-02-05 11:22:36,213: Validation loss: 0.670
+
+
+
+

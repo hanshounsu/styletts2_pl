@@ -80,7 +80,7 @@ class FilePathDataset(torch.utils.data.Dataset):
         mel_params = MEL_PARAMS
 
         _data_list = [l.strip().split('|') for l in data_list]
-        self.data_list = [data if len(data) == 3 else (*data, 0) for data in _data_list]
+        self.data_list = [data if len(data) == 3 else (*data, '0') for data in _data_list]
         self.text_cleaner = TextCleaner() # change "number + alphabet + ipa" sets to int indices
         self.sr = sr
 
@@ -138,7 +138,10 @@ class FilePathDataset(torch.utils.data.Dataset):
     def _load_tensor(self, data):
         wave_path, text, speaker_id = data
         speaker_id = int(speaker_id)
-        wave, sr = sf.read(osp.join(self.root_path, wave_path))
+        try:
+            wave, sr = sf.read(osp.join(self.root_path, wave_path))
+        except:
+            raise ValueError(f"Failed to load {osp.join(self.root_path, wave_path)}")
         if wave.shape[-1] == 2:
             wave = wave[:, 0].squeeze()
         if sr != 24000:
