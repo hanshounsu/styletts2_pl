@@ -201,22 +201,25 @@ def main(config_path):
                 mask = length_to_mask(mel_input_length // (2 ** n_down)).to('cuda')
                 text_mask = length_to_mask(input_lengths).to(texts.device) # mask for considering padded values
 
-            ppgs, s2s_pred, s2s_attn = model.text_aligner(mels, mask, texts) # mask length is halved by 2 ** n_down (but why??? (240122 hounsu))
+            ppgs, s2s_pred, s2s_attn = model.text_aligner(mels, mask, texts) # mask length is halved by 2 ** n_down because the model downsamples the input by
 
-            s2s_attn = s2s_attn.transpose(-1, -2)
-            s2s_attn = s2s_attn[..., 1:]
+            s2s_attn = s2s_attn.transpose(-1, -2) # (b, L, T) -> (b, T, L) - L is the length of the text, T is the length of the frame
+            s2s_attn = s2s_attn[..., 1:] # why? (240205 hounsu)
             s2s_attn = s2s_attn.transpose(-1, -2)
 
             with torch.no_grad():
                 attn_mask = (~mask).unsqueeze(-1).expand(mask.shape[0], mask.shape[1], text_mask.shape[-1]).float().transpose(-1, -2)
                 attn_mask = attn_mask.float() * (~text_mask).unsqueeze(-1).expand(text_mask.shape[0], text_mask.shape[1], mask.shape[-1]).float()
-                attn_mask = (attn_mask < 1)
+                attn_mask = (attn_mask < 1) # (b, L, T) shaped mask with elements filled with True where the padding is applied, square matrix shape filled with False
 
             s2s_attn.masked_fill_(attn_mask, 0.0)
                         
             with torch.no_grad():
-                mask_ST = mask_from_lens(s2s_attn, input_lengths, mel_input_length // (2 ** n_down))
-                s2s_attn_mono = maximum_path(s2s_attn, mask_ST)
+                mask_ST = mask_from_lens(s2s_attn, input_lengths, mel_input_length // (2 ** n_down)) # 위에랑 똑같은 거 하는 거 아님?
+                s2s_attn_mono = maximum_path(s2s_attn, mask_ST) # hard monotonic alignment
+
+            # check if mask_ST and attn_mask are same
+            # assert (mask_ST == attn_mask).all() -> 똑같음
 
             # encode
             t_en = model.text_encoder(texts, input_lengths, text_mask)

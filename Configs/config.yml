@@ -31,7 +31,7 @@ preprocess_params:
     hop_length: 300
 
 model_params:
-  multispeaker: false
+  multispeaker: true
 
   dim_in: 64 
   hidden_dim: 512
@@ -97,8 +97,8 @@ loss_params:
     lambda_sty: 1. # style reconstruction loss (2nd stage)
     lambda_diff: 1. # score matching loss (2nd stage)
     
-    diff_epoch: 20 # style diffusion starting epoch (2nd stage)
-    joint_epoch: 50 # joint training starting epoch (2nd stage)
+    diff_epoch: 0 # style diffusion starting epoch (2nd stage)
+    joint_epoch: 0 # joint training starting epoch (2nd stage)
 
 optimizer_params:
   lr: 0.0001 # general learning rate

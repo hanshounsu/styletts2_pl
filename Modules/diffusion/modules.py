@@ -127,17 +127,17 @@ class StyleTransformer1d(nn.Module):
         if self.use_context_time:
             assert_message = "use_context_time=True but no time features provided"
             assert exists(time), assert_message
-            items += [self.to_time(time)]
+            items += [self.to_time(time)] # [B, 1024]
         # Compute features
         if self.use_context_features:
             assert_message = "context_features exists but no features provided"
             assert exists(features), assert_message
-            items += [self.to_features(features)]
+            items += [self.to_features(features)] # [B, 1024]
 
         # Compute joint mapping
         if self.use_context_time or self.use_context_features:
-            mapping = reduce(torch.stack(items), "n b m -> b m", "sum")
-            mapping = self.to_mapping(mapping)
+            mapping = reduce(torch.stack(items), "n b m -> b m", "sum") # just sum ??
+            mapping = self.to_mapping(mapping) # just linear layers
 
         return mapping
             
@@ -145,10 +145,10 @@ class StyleTransformer1d(nn.Module):
         
         mapping = self.get_mapping(time, features)
         x = torch.cat([x.expand(-1, embedding.size(1), -1), embedding], axis=-1)
-        mapping = mapping.unsqueeze(1).expand(-1, embedding.size(1), -1)
+        mapping = mapping.unsqueeze(1).expand(-1, embedding.size(1), -1) # [B, D] -> [B, L, D]
         
         for block in self.blocks:
-            x = x + mapping
+            x = x + mapping # just add mapping? wtf?
             x = block(x, features)
         
         x = x.mean(axis=1).unsqueeze(1)
@@ -161,13 +161,13 @@ class StyleTransformer1d(nn.Module):
                 time: Tensor, 
                 embedding_mask_proba: float = 0.0,
                 embedding: Optional[Tensor] = None, 
-                features: Optional[Tensor] = None,
+                features: Optional[Tensor] = None, # [B, C]
                embedding_scale: float = 1.0) -> Tensor:
         
         b, device = embedding.shape[0], embedding.device
-        fixed_embedding = self.fixed_embedding(embedding)
+        fixed_embedding = self.fixed_embedding(embedding) # [B, L, D]
         if embedding_mask_proba > 0.0:
-            # Randomly mask embedding
+            # Randomly mask embedding, but mask with position-wise varying embeddings
             batch_mask = rand_bool(
                 shape=(b, 1, 1), proba=embedding_mask_proba, device=device
             )
@@ -399,12 +399,18 @@ class Transformer1d(nn.Module):
         
         return x
         
-    def forward(self, x: Tensor, 
+    def forward(self,
+                x: Tensor, 
                 time: Tensor, 
                 embedding_mask_proba: float = 0.0,
                 embedding: Optional[Tensor] = None, 
                 features: Optional[Tensor] = None,
                embedding_scale: float = 1.0) -> Tensor:
+        '''
+        x shape : (B, 1, 256)
+        time : (B, 1)
+        embedding : bert dur
+        '''
         
         b, device = embedding.shape[0], embedding.device
         fixed_embedding = self.fixed_embedding(embedding)

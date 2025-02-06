@@ -307,8 +307,8 @@ def main(config_path):
             gs = torch.stack(gs).squeeze() # global acoustic styles
             s_trg = torch.cat([gs, s_dur], dim=-1).detach() # ground truth for denoiser
 
-            bert_dur = model.bert(texts, attention_mask=(~text_mask).int())
-            d_en = model.bert_encoder(bert_dur).transpose(-1, -2) 
+            bert_dur = model.bert(texts, attention_mask=(~text_mask).int()) # [B, L] -> [B, L, D]
+            d_en = model.bert_encoder(bert_dur).transpose(-1, -2) # this is simple linear layer [B, D', L] 
             
             # denoiser training
             if epoch >= diff_epoch:
@@ -327,7 +327,7 @@ def main(config_path):
                              num_steps=num_steps).squeeze(1)
                     loss_diff = model.diffusion(s_trg.unsqueeze(1), embedding=bert_dur, features=ref).mean() # EDM loss
                     loss_sty = F.l1_loss(s_preds, s_trg.detach()) # style reconstruction loss
-                else:
+                else: # no reference because single speaker
                     s_preds = sampler(noise = torch.randn_like(s_trg).unsqueeze(1).to(device), 
                           embedding=bert_dur,
                           embedding_scale=1,

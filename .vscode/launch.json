@@ -17,7 +17,8 @@
                 "NCCL_P2P_DISABLE": "1",
                 "NCCL_IB_DISABLE": "1"
             },
-            "console": "integratedTerminal"
+            "console": "integratedTerminal",
+            "justMyCode": false
         },
         {
             "name": "train_first cli",
@@ -59,7 +60,8 @@
                 "NCCL_P2P_DISABLE": "1",
                 "NCCL_IB_DISABLE": "1"
             },
-            "console": "integratedTerminal"
+            "console": "integratedTerminal",
+            "justMyCode": false
         },
     ]
 }

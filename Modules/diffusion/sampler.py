@@ -201,7 +201,7 @@ class KDiffusion(Diffusion):
         sigmas = to_batch(x=sigma, xs=sigmas, batch_size=batch_size, device=device)
 
         # Predict network output and add skip connection
-        c_skip, c_out, c_in, c_noise = self.get_scale_weights(sigmas)
+        c_skip, c_out, c_in, c_noise = self.get_scale_weights(sigmas) # scaling values
         x_pred = self.net(c_in * x_noisy, c_noise, **kwargs)
         x_denoised = c_skip * x_noisy + c_out * x_pred
 
