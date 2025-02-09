@@ -3,7 +3,7 @@ __pycache__
 lightning_logs/
 logs/
 
-Models/LJSpeech/
+Models/
 
 # *.pth
 *.ckpt
