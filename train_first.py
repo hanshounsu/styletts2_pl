@@ -268,7 +268,7 @@ def main(config_path):
                 real_norm = log_norm(gt.unsqueeze(1)).squeeze(1).detach()
                 F0_real, _, _ = model.pitch_extractor(gt.unsqueeze(1))
                 
-            s = model.acoustic_style_encoder(st.unsqueeze(1) if multispeaker else gt.unsqueeze(1)) # But why input same gt for single speaker case?
+            s = model.acoustic_style_encoder(st.unsqueeze(1) if multispeaker else gt.unsqueeze(1)) # But why input is gt (not st) for single speaker case?
             
             y_rec = model.decoder(en, F0_real, real_norm, s)
             

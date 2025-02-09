@@ -466,7 +466,10 @@ class DurationProsodyPredictor(nn.Module):
 
 
     def forward(self, texts, style, text_lengths, alignment, m):
-        d = self.text_encoder(texts, style, text_lengths, m) # texts : [B, emb1, T], style : [B, emb2], alignment : [B, T, L]
+        """
+        texts : [B, emb1, T], style : [B, emb2], alignment : [B, T, L]
+        """
+        d = self.text_encoder(texts, style, text_lengths, m)
         
         batch_size = d.shape[0]
         text_size = d.shape[1]
@@ -488,9 +491,9 @@ class DurationProsodyPredictor(nn.Module):
         x_pad[:, :x.shape[1], :] = x
         x = x_pad.to(x.device)
                 
-        duration = self.duration_proj(nn.functional.dropout(x, 0.5, training=self.training))
+        duration = self.duration_proj(nn.functional.dropout(x, 0.5, training=self.training)) # why dropout ???
         
-        en = (d.transpose(-1, -2) @ alignment)
+        en = (d.transpose(-1, -2) @ alignment) # text encoder를 alignment에 맞게 뿔림
 
         return duration.squeeze(-1), en
     
@@ -534,6 +537,10 @@ class DurationEncoder(nn.Module):
         self.sty_dim = sty_dim
 
     def forward(self, x, style, text_lengths, m):
+        '''
+        x (bert d_en) : [B, D, L]
+        style : [B, S] -> broadcasted and concatenated to x & adalayernorm
+        '''
         masks = m.to(text_lengths.device)
         
         x = x.permute(2, 0, 1)

@@ -144,12 +144,12 @@ class StyleTransformer1d(nn.Module):
     def run(self, x, time, embedding, features):
         
         mapping = self.get_mapping(time, features)
-        x = torch.cat([x.expand(-1, embedding.size(1), -1), embedding], axis=-1)
+        x = torch.cat([x.expand(-1, embedding.size(1), -1), embedding], axis=-1) # just concat bert output with broadcasted x
         mapping = mapping.unsqueeze(1).expand(-1, embedding.size(1), -1) # [B, D] -> [B, L, D]
         
         for block in self.blocks:
             x = x + mapping # just add mapping? wtf?
-            x = block(x, features)
+            x = block(x, features) # condition features here again, by AdaIN
         
         x = x.mean(axis=1).unsqueeze(1)
         x = self.to_out(x)

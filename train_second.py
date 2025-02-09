@@ -275,7 +275,7 @@ def main(config_path):
                     s2s_attn = s2s_attn.transpose(-1, -2)
                 except:
                     continue
-
+                # why always use hard monotonic alignment?
                 mask_ST = mask_from_lens(s2s_attn, input_lengths, mel_input_length // (2 ** n_down))
                 s2s_attn_mono = maximum_path(s2s_attn, mask_ST)
 
@@ -291,7 +291,7 @@ def main(config_path):
                     ref_sp = model.prosodic_style_encoder(ref_mels.unsqueeze(1))
                     ref = torch.cat([ref_ss, ref_sp], dim=1)
 
-            # compute the style of the entire utterance
+            # compute the style of the entire utterance from mel
             # this operation cannot be done in batch because of the avgpool layer (may need to work on masked avgpool)
             ss = []
             gs = []
@@ -310,7 +310,7 @@ def main(config_path):
             bert_dur = model.bert(texts, attention_mask=(~text_mask).int()) # [B, L] -> [B, L, D]
             d_en = model.bert_encoder(bert_dur).transpose(-1, -2) # this is simple linear layer [B, D', L] 
             
-            # denoiser training
+            # Style denoiser training
             if epoch >= diff_epoch:
                 num_steps = np.random.randint(3, 5)
                 
@@ -324,7 +324,7 @@ def main(config_path):
                           embedding_scale=1,
                                    features=ref, # reference from the same speaker as the embedding
                              embedding_mask_proba=0.1,
-                             num_steps=num_steps).squeeze(1)
+                             num_steps=num_steps).squeeze(1) # 아니 여기서 sampling을 왜하지 ???
                     loss_diff = model.diffusion(s_trg.unsqueeze(1), embedding=bert_dur, features=ref).mean() # EDM loss
                     loss_sty = F.l1_loss(s_preds, s_trg.detach()) # style reconstruction loss
                 else: # no reference because single speaker
@@ -332,13 +332,13 @@ def main(config_path):
                           embedding=bert_dur,
                           embedding_scale=1,
                              embedding_mask_proba=0.1,
-                             num_steps=num_steps).squeeze(1)                    
+                             num_steps=num_steps).squeeze(1)
                     loss_diff = model.diffusion.module.diffusion(s_trg.unsqueeze(1), embedding=bert_dur).mean() # EDM loss
                     loss_sty = F.l1_loss(s_preds, s_trg.detach()) # style reconstruction loss
             else:
                 loss_sty = 0
                 loss_diff = 0
-
+            # from BERT encoder and prosodict style encoder, get the duration (prosody is predicted with F0Ntrain)
             d, p = model.duration_prosody_predictor(d_en, s_dur, 
                                                     input_lengths, 
                                                     s2s_attn_mono, 
@@ -376,7 +376,7 @@ def main(config_path):
             
             if gt.size(-1) < 80:
                 continue
-
+            # TODO : 여기서부터 보자.
             s_dur = model.prosodic_style_encoder(st.unsqueeze(1) if multispeaker else gt.unsqueeze(1))
             s = model.acoustic_style_encoder(st.unsqueeze(1) if multispeaker else gt.unsqueeze(1))
             
@@ -384,7 +384,7 @@ def main(config_path):
                 F0_real, _, F0 = model.pitch_extractor(gt.unsqueeze(1))
                 F0 = F0.reshape(F0.shape[0], F0.shape[1] * 2, F0.shape[2], 1).squeeze()
 
-                asr_real = model.text_aligner.get_feature(gt)
+                # asr_real = model.text_aligner.get_feature(gt) # 필요한가?
 
                 N_real = log_norm(gt.unsqueeze(1)).squeeze(1)
                 
@@ -426,12 +426,12 @@ def main(config_path):
 
             loss_ce = 0
             loss_dur = 0
-            for _s2s_pred, _text_input, _text_length in zip(d, (d_gt), input_lengths):
+            for _s2s_pred, _text_input, _text_length in zip(d, (d_gt), input_lengths): # d_gt : groundtruth(provided by acoustic module) duration
                 _s2s_pred = _s2s_pred[:_text_length, :]
                 _text_input = _text_input[:_text_length].long()
                 _s2s_trg = torch.zeros_like(_s2s_pred)
                 for p in range(_s2s_trg.shape[0]):
-                    _s2s_trg[p, :_text_input[p]] = 1
+                    _s2s_trg[p, :_text_input[p]] = 1 # [B, L, max_dur(=50)] for each text frame, fill up 1s for number of duration
                 _dur_pred = torch.sigmoid(_s2s_pred).sum(axis=1)
 
                 loss_dur += F.l1_loss(_dur_pred[1:_text_length-1], 

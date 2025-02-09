@@ -44,7 +44,7 @@
                 "Configs/config.yml"
             ],
             "console": "integratedTerminal",
-            "justMyCode": false
+            "justMyCode": true
         },
         {
             "name": "train_first Libritts",
