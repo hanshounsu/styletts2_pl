@@ -282,7 +282,7 @@ def main(config_path):
 
                 # encode
                 t_en = model.text_encoder(texts, input_lengths, text_mask)
-                asr = (t_en @ s2s_attn_mono)
+                gt_align = (t_en @ s2s_attn_mono)
 
                 d_gt = s2s_attn_mono.sum(axis=-1).detach()
                 
@@ -339,8 +339,8 @@ def main(config_path):
             else:
                 loss_sty = 0
                 loss_diff = 0
-            # from BERT encoder and prosodict style encoder, get the duration (prosody is predicted with F0Ntrain)
-            d, p = model.duration_prosody_predictor(d_en, s_dur, 
+            # from BERT encoder and prosody style encoder, get the duration (prosody is predicted with F0Ntrain)
+            pred_dur, pred_align = model.duration_prosody_predictor(d_en, s_dur, 
                                                     input_lengths, 
                                                     s2s_attn_mono, 
                                                     text_mask)
@@ -350,15 +350,15 @@ def main(config_path):
             en = []
             gt = []
             st = []
-            p_en = []
+            pred_align_list = []
             wav = []
 
             for bib in range(len(mel_input_length)):
                 mel_length = int(mel_input_length[bib].item() / 2)
 
                 random_start = np.random.randint(0, mel_length - mel_len)
-                en.append(asr[bib, :, random_start:random_start+mel_len])
-                p_en.append(p[bib, :, random_start:random_start+mel_len])
+                en.append(gt_align[bib, :, random_start:random_start+mel_len])
+                pred_align_list.append(pred_align[bib, :, random_start:random_start+mel_len])
                 gt.append(mels[bib, :, (random_start * 2):((random_start+mel_len) * 2)])
                 
                 y = waves[bib][(random_start * 2) * 300:((random_start+mel_len) * 2) * 300]
@@ -591,28 +591,28 @@ def main(config_path):
 
                         # encode
                         t_en = model.text_encoder(texts, input_lengths, text_mask)
-                        asr = (t_en @ s2s_attn_mono)
+                        gt_align = (t_en @ s2s_attn_mono)
 
                         d_gt = s2s_attn_mono.sum(axis=-1).detach()
 
-                    ss = []
+                    ps = []
                     gs = []
 
                     for bib in range(len(mel_input_length)):
                         mel_length = int(mel_input_length[bib].item())
                         mel = mels[bib, :, :mel_input_length[bib]]
-                        s = model.prosodic_style_encoder(mel.unsqueeze(0).unsqueeze(1))
-                        ss.append(s)
-                        s = model.acoustic_style_encoder(mel.unsqueeze(0).unsqueeze(1))
-                        gs.append(s)
+                        prosodic_style = model.prosodic_style_encoder(mel.unsqueeze(0).unsqueeze(1))
+                        ps.append(prosodic_style)
+                        acoustic_style = model.acoustic_style_encoder(mel.unsqueeze(0).unsqueeze(1))
+                        gs.append(acoustic_style)
 
-                    s = torch.stack(ss).squeeze() # [B, 128]
-                    gs = torch.stack(gs).squeeze() # [B, 128]
-                    s_trg = torch.cat([s, gs], dim=-1).detach()
+                    prosodic_styles = torch.stack(ss).squeeze() # [B, 128]
+                    acoustic_styles = torch.stack(gs).squeeze() # [B, 128]
+                    s_trg = torch.cat([prosodic_styles, acoustic_styles], dim=-1).detach()
 
                     bert_dur = model.bert(texts, attention_mask=(~text_mask).int())
                     d_en = model.bert_encoder(bert_dur).transpose(-1, -2) 
-                    d, p = model.duration_prosody_predictor(d_en, s, 
+                    pred_dur, pred_align = model.duration_prosody_predictor(d_en, prosodic_styles, 
                                                         input_lengths, 
                                                         s2s_attn_mono, 
                                                         text_mask)
@@ -627,8 +627,8 @@ def main(config_path):
                         mel_length = int(mel_input_length[bib].item() / 2)
 
                         random_start = np.random.randint(0, mel_length - mel_len)
-                        en.append(asr[bib, :, random_start:random_start+mel_len])
-                        p_en.append(p[bib, :, random_start:random_start+mel_len])
+                        en.append(gt_align[bib, :, random_start:random_start+mel_len])
+                        p_en.append(pred_align[bib, :, random_start:random_start+mel_len])
 
                         gt.append(mels[bib, :, (random_start * 2):((random_start+mel_len) * 2)])
 
@@ -658,9 +658,10 @@ def main(config_path):
 
                     loss_dur /= texts.size(0)
 
-                    s = model.acoustic_style_encoder(gt.unsqueeze(1))
+                    # s = model.acoustic_style_encoder(gt.unsqueeze(1))
+                    acoustic_style = model.acoustic_style_encoder(gt.unsqueeze(1))
 
-                    y_rec = model.decoder(en, F0_fake, N_fake, s)
+                    y_rec = model.decoder(en, F0_fake, N_fake, acoustic_style)
                     loss_mel = stft_loss(y_rec.squeeze(), wav.detach())
 
                     F0_real, _, F0 = model.pitch_extractor(gt.unsqueeze(1)) 
@@ -688,10 +689,10 @@ def main(config_path):
             # generating reconstruction examples with GT duration
             
             with torch.no_grad():
-                for bib in range(len(asr)):
+                for bib in range(len(gt_align)):
                     mel_length = int(mel_input_length[bib].item())
                     gt = mels[bib, :, :mel_length].unsqueeze(0)
-                    en = asr[bib, :, :mel_length // 2].unsqueeze(0)
+                    en = gt_align[bib, :, :mel_length // 2].unsqueeze(0)
 
                     F0_real, _, _ = model.pitch_extractor(gt.unsqueeze(1))
                     s = model.acoustic_style_encoder(gt.unsqueeze(1))
