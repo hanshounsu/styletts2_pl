@@ -28,22 +28,22 @@ class SLMAdversarialLoss(torch.nn.Module):
             num_steps = np.random.randint(3, 5)
             if ref_s is not None:
                 s_preds = self.sampler(noise = torch.randn_like(s_trg).unsqueeze(1).to(ref_text.device), 
-                      embedding=bert_dur,
-                      embedding_scale=1,
-                               features=ref_s, # reference from the same speaker as the embedding
-                         embedding_mask_proba=0.1,
-                         num_steps=num_steps).squeeze(1)
+                            embedding=bert_dur,
+                            embedding_scale=1,
+                            features=ref_s, # reference from the same speaker as the embedding
+                            embedding_mask_proba=0.1,
+                            num_steps=num_steps).squeeze(1)
             else:
                 s_preds = self.sampler(noise = torch.randn_like(s_trg).unsqueeze(1).to(ref_text.device), 
-                      embedding=bert_dur,
-                      embedding_scale=1,
-                         embedding_mask_proba=0.1,
-                         num_steps=num_steps).squeeze(1)
+                            embedding=bert_dur,
+                            embedding_scale=1,
+                            embedding_mask_proba=0.1,
+                            num_steps=num_steps).squeeze(1)
             
         s_dur = s_preds[:, 128:]
         s = s_preds[:, :128]
         
-        d, _ = self.model.predictor(d_en, s_dur, 
+        d, _ = self.model.duration_prosody_predictor(d_en, s_dur, 
                                                 ref_lengths, 
                                                 torch.randn(ref_lengths.shape[0], ref_lengths.max(), 2).to(ref_text.device), 
                                                 text_mask)
@@ -87,7 +87,7 @@ class SLMAdversarialLoss(torch.nn.Module):
 
         asr_pred = t_en @ s2s_attn
 
-        _, p_pred = self.model.predictor(d_en, s_dur, 
+        _, p_pred = self.model.duration_prosody_predictor(d_en, s_dur, 
                                                 ref_lengths, 
                                                 s2s_attn, 
                                                 text_mask)
@@ -134,7 +134,7 @@ class SLMAdversarialLoss(torch.nn.Module):
         en = torch.stack(en)
         p_en = torch.stack(p_en)
         
-        F0_fake, N_fake = self.model.predictor.F0Ntrain(p_en, sp[:, 128:])
+        F0_fake, N_fake = self.model.duration_prosody_predictor.F0Ntrain(p_en, sp[:, 128:])
         y_pred = self.model.decoder(en, F0_fake, N_fake, sp[:, :128])
         
         # discriminator loss

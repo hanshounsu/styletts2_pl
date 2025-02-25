@@ -79,9 +79,11 @@ class FilePathDataset(torch.utils.data.Dataset):
         spect_params = SPECT_PARAMS
         mel_params = MEL_PARAMS
 
-        _data_list = [l.strip().split('|') for l in data_list]
-        self.data_list = [data if len(data) == 3 else (*data, '0') for data in _data_list]
-        self.text_cleaner = TextCleaner() # change "number + alphabet + ipa" sets to int indices
+        _data_list = [l.strip().split('|') for l in data_list] # lines from .txt
+        self.data_list = [data  if len(data) == 3 else (*data, '0') for data in _data_list]
+        if not validation:
+            self.data_list = self.data_list[-10:]
+        self.text_cleaner = TextCleaner() # class that transforms {number + alphabet + ipa} sets to int indices
         self.sr = sr
 
         self.df = pd.DataFrame(self.data_list)
@@ -115,11 +117,11 @@ class FilePathDataset(torch.utils.data.Dataset):
         length_feature = acoustic_feature.size(1)
         acoustic_feature = acoustic_feature[:, :(length_feature - length_feature % 2)]
         
-        # get reference sample
+        # get reference sample (.sample(n=1) -> randomly select 1 sample)
         ref_data = (self.df[self.df[2] == str(speaker_id)]).sample(n=1).iloc[0].tolist()
         ref_mel_tensor, ref_label = self._load_data(ref_data[:3])
         
-        # get OOD text
+        # get OOD text for WavLM training
         
         ps = ""
         
@@ -231,6 +233,7 @@ class Collater(object):
             waves[bid] = wave
         
         # print("Collater: mel size: ", mels.size(), "text size: ", texts.size(), "ref text size: ", ref_texts.size(), "ref mel size: ", ref_mels.size())
+        # mels : mel spectrogram of waves for 
 
         return waves, texts, input_lengths, ref_texts, ref_lengths, mels, output_lengths, ref_mels
 

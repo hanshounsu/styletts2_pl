@@ -1,5 +1,5 @@
-log_dir: "Models/LibriTTS/first_stage"
-first_stage_path: "first_stage.pth"
+log_dir: "Models/LibriTTS/second_stage"
+first_stage_path: "epoch_1st_00030.pth"
 save_freq: 2
 log_interval: 10
 device: "cuda"

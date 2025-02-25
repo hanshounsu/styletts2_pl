@@ -1,10 +1,8 @@
+*.pth
+*.ckpt
+*.t7
 __pycache__
-
 lightning_logs/
 logs/
-
-Models/LJSpeech/
-
-# *.pth
-*.ckpt
-# *.t7
+Models/
+Models/LibriTTS/first_stage/
