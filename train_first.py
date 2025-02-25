@@ -137,7 +137,7 @@ def main(config_path):
     train_dataloader, val_dataloader = accelerator.prepare(
         train_dataloader, val_dataloader
     )
-    
+    # del model['prosodic_style_encoder'], model['duration_prosody_predictor'], model['diffusion']
     _ = [model[key].to(device) for key in model]
 
     # initialize optimizers after preparing models for compatibility with FSDP
@@ -400,7 +400,7 @@ def main(config_path):
 
                 loss_mel = stft_loss(y_rec.squeeze(), wav.detach())
 
-                loss_test += accelerator.gather(loss_mel).mean().item()
+                loss_test += accelerator.gather(loss_mel).mean()
                 iters_test += 1
 
         if accelerator.is_main_process:
