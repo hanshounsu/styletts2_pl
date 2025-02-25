@@ -1,5 +1,7 @@
+*.pth
+*.ckpt
+*.t7
 __pycache__
-
 lightning_logs/
 logs/
 <<<<<<< HEAD

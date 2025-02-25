@@ -41,8 +41,11 @@
             "program": "./train_second.py",
             "args": [
                 "--config_path",
-                "Configs/config.yml"
+                "Configs/config_libritts.yml",
             ],
+            "env": {
+                "CUDA_VISIBLE_DEVICES": "0",
+            },
             "console": "integratedTerminal",
             "justMyCode": true
         },

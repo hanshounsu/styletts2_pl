@@ -30,6 +30,7 @@ from Modules.slmadv import SLMAdversarialLoss
 from Modules.diffusion.sampler import DiffusionSampler, ADPM2Sampler, KarrasSchedule
 
 from optimizers import build_optimizer
+from tqdm import tqdm
 
 # simple fix for dataparallel that allows access to class attributes
 class MyDataParallel(torch.nn.DataParallel):
@@ -209,7 +210,7 @@ def main(config_path):
         
     # load models if there is a model
     if load_pretrained:
-        model, optimizer, start_epoch, iters = load_checkpoint(model,  optimizer, config['pretrained_model'],
+        model, optimizer, start_epoch, iters = load_checkpoint(model, optimizer, config['pretrained_model'],
                                     load_only_params=config.get('load_only_params', True))
         
     n_down = model.text_aligner.n_down
@@ -257,7 +258,7 @@ def main(config_path):
         if epoch >= diff_epoch:
             start_ds = True
 
-        for i, batch in enumerate(train_dataloader):
+        for i, batch in enumerate(tqdm(train_dataloader)):
             waves = batch[0]
             batch = [b.to(device) for b in batch[1:]]
             texts, input_lengths, ref_texts, ref_lengths, mels, mel_input_length, ref_mels = batch
@@ -267,7 +268,7 @@ def main(config_path):
                 mel_mask = length_to_mask(mel_input_length).to(device)
                 text_mask = length_to_mask(input_lengths).to(texts.device)
 
-                # 1. Extract the alignment matrix
+                # 1. Extract the alignment matrix (now GT)
                 try:
                     _, _, s2s_attn = model.text_aligner(mels, mask, texts)
                     s2s_attn = s2s_attn.transpose(-1, -2)
@@ -389,7 +390,7 @@ def main(config_path):
                 N_real = log_norm(gt.unsqueeze(1)).squeeze(1)
                 
                 y_rec_gt = wav.unsqueeze(1)
-                y_rec_gt_pred = model.decoder(en, F0_real, N_real, s)
+                y_rec_gt_pred = model.decoder(en, F0_real, N_real, s) # en : [B, C, T//2], F0_real : [B, T], N_real : [B, T], s : [B, D]
 
                 if epoch >= joint_epoch:
                     # ground truth from recording
@@ -569,7 +570,7 @@ def main(config_path):
 
         with torch.no_grad():
             iters_test = 0
-            for batch_idx, batch in enumerate(val_dataloader):
+            for batch_idx, batch in enumerate(tqdm(val_dataloader)):
                 optimizer.zero_grad()
                 
                 try:
@@ -580,12 +581,12 @@ def main(config_path):
                         mask = length_to_mask(mel_input_length // (2 ** n_down)).to('cuda')
                         text_mask = length_to_mask(input_lengths).to(texts.device)
 
-                        _, _, s2s_attn = model.text_aligner(mels, mask, texts)
+                        _, _, s2s_attn = model.text_aligner(mels, mask, texts) # alignment between mels(downsampled once) and texts(added 1 (why?))
                         s2s_attn = s2s_attn.transpose(-1, -2)
-                        s2s_attn = s2s_attn[..., 1:]
+                        s2s_attn = s2s_attn[..., 1:] # why remove the first token?
                         s2s_attn = s2s_attn.transpose(-1, -2)
 
-                        mask_ST = mask_from_lens(s2s_attn, input_lengths, mel_input_length // (2 ** n_down))
+                        mask_ST = mask_from_lens(s2s_attn, input_lengths, mel_input_length // (2 ** n_down)) # mask the part of s2s_attn that should have no value (due to mask)
                         s2s_attn_mono = maximum_path(s2s_attn, mask_ST)
 
                         # encode
@@ -605,8 +606,8 @@ def main(config_path):
                         s = model.acoustic_style_encoder(mel.unsqueeze(0).unsqueeze(1))
                         gs.append(s)
 
-                    s = torch.stack(ss).squeeze()
-                    gs = torch.stack(gs).squeeze()
+                    s = torch.stack(ss).squeeze() # [B, 128]
+                    gs = torch.stack(gs).squeeze() # [B, 128]
                     s_trg = torch.cat([s, gs], dim=-1).detach()
 
                     bert_dur = model.bert(texts, attention_mask=(~text_mask).int())
@@ -693,7 +694,6 @@ def main(config_path):
                     en = asr[bib, :, :mel_length // 2].unsqueeze(0)
 
                     F0_real, _, _ = model.pitch_extractor(gt.unsqueeze(1))
-                    F0_real = F0_real.unsqueeze(0)
                     s = model.acoustic_style_encoder(gt.unsqueeze(1))
                     real_norm = log_norm(gt.unsqueeze(1)).squeeze(1)
 

@@ -239,7 +239,7 @@ def main(config_path):
             gt = []
             wav = []
             st = []
-            
+            # cut random clips, en: text encoder output, gt: ground truth mel, wav: waveform, st: style reference
             for bib in range(len(mel_input_length)):
                 mel_length = int(mel_input_length[bib].item() / 2)
 
