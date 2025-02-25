@@ -353,7 +353,11 @@ class Generator(torch.nn.Module):
 
             har_source, noi_source, uv = self.m_source(f0)
             har_source = har_source.transpose(1, 2).squeeze(1)
+<<<<<<< HEAD
             har_spec, har_phase = self.stft.transform(har_source) # (B, T)
+=======
+            har_spec, har_phase = self.stft.transform(har_source)
+>>>>>>> 4baf786fac4617686d5794dc5cb699b247b23ce9
             har = torch.cat([har_spec, har_phase], dim=1)
         
         for i in range(self.num_upsamples):
@@ -502,25 +506,40 @@ class Decoder(nn.Module):
             F0_down = downlist[random.randint(0, 2)]
             downlist = [0, 3, 7, 15]
             N_down = downlist[random.randint(0, 3)]
+<<<<<<< HEAD
             # What does F0_down and N_down do? Smoothing the F0 and N? Why? (250209)
+=======
+>>>>>>> 4baf786fac4617686d5794dc5cb699b247b23ce9
             if F0_down:
                 F0_curve = nn.functional.conv1d(F0_curve.unsqueeze(1), torch.ones(1, 1, F0_down).to('cuda'), padding=F0_down//2).squeeze(1) / F0_down
             if N_down:
                 N = nn.functional.conv1d(N.unsqueeze(1), torch.ones(1, 1, N_down).to('cuda'), padding=N_down//2).squeeze(1)  / N_down
 
         
+<<<<<<< HEAD
         F0 = self.F0_conv(F0_curve.unsqueeze(1)) # (B, T) -> (B, 1, T//2)
         N = self.N_conv(N.unsqueeze(1)) # (B, T) -> (B, 1, T//2)
         
         x = torch.cat([asr, F0, N], axis=1)
         x = self.encode(x, s) # s is conditioned by AdaIN
+=======
+        F0 = self.F0_conv(F0_curve.unsqueeze(1))
+        N = self.N_conv(N.unsqueeze(1))
+        
+        x = torch.cat([asr, F0, N], axis=1)
+        x = self.encode(x, s)
+>>>>>>> 4baf786fac4617686d5794dc5cb699b247b23ce9
         
         asr_res = self.asr_res(asr)
         
         res = True
         for block in self.decode:
             if res:
+<<<<<<< HEAD
                 x = torch.cat([x, asr_res, F0, N], axis=1) # (B, 1090, T//2)
+=======
+                x = torch.cat([x, asr_res, F0, N], axis=1)
+>>>>>>> 4baf786fac4617686d5794dc5cb699b247b23ce9
             x = block(x, s)
             if block.upsample_type != "none":
                 res = False

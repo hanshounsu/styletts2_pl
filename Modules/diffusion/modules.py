@@ -127,29 +127,51 @@ class StyleTransformer1d(nn.Module):
         if self.use_context_time:
             assert_message = "use_context_time=True but no time features provided"
             assert exists(time), assert_message
+<<<<<<< HEAD
             items += [self.to_time(time)] # [B, 1024]
+=======
+            items += [self.to_time(time)]
+>>>>>>> 4baf786fac4617686d5794dc5cb699b247b23ce9
         # Compute features
         if self.use_context_features:
             assert_message = "context_features exists but no features provided"
             assert exists(features), assert_message
+<<<<<<< HEAD
             items += [self.to_features(features)] # [B, 1024]
 
         # Compute joint mapping
         if self.use_context_time or self.use_context_features:
             mapping = reduce(torch.stack(items), "n b m -> b m", "sum") # just sum ??
             mapping = self.to_mapping(mapping) # just linear layers
+=======
+            items += [self.to_features(features)]
+
+        # Compute joint mapping
+        if self.use_context_time or self.use_context_features:
+            mapping = reduce(torch.stack(items), "n b m -> b m", "sum")
+            mapping = self.to_mapping(mapping)
+>>>>>>> 4baf786fac4617686d5794dc5cb699b247b23ce9
 
         return mapping
             
     def run(self, x, time, embedding, features):
         
         mapping = self.get_mapping(time, features)
+<<<<<<< HEAD
         x = torch.cat([x.expand(-1, embedding.size(1), -1), embedding], axis=-1) # just concat bert output with broadcasted x
         mapping = mapping.unsqueeze(1).expand(-1, embedding.size(1), -1) # [B, D] -> [B, L, D]
         
         for block in self.blocks:
             x = x + mapping # just add mapping? wtf?
             x = block(x, features) # condition features here again, by AdaIN
+=======
+        x = torch.cat([x.expand(-1, embedding.size(1), -1), embedding], axis=-1)
+        mapping = mapping.unsqueeze(1).expand(-1, embedding.size(1), -1)
+        
+        for block in self.blocks:
+            x = x + mapping
+            x = block(x, features)
+>>>>>>> 4baf786fac4617686d5794dc5cb699b247b23ce9
         
         x = x.mean(axis=1).unsqueeze(1)
         x = self.to_out(x)
@@ -161,6 +183,7 @@ class StyleTransformer1d(nn.Module):
                 time: Tensor, 
                 embedding_mask_proba: float = 0.0,
                 embedding: Optional[Tensor] = None, 
+<<<<<<< HEAD
                 features: Optional[Tensor] = None, # [B, C]
                embedding_scale: float = 1.0) -> Tensor:
         
@@ -168,6 +191,15 @@ class StyleTransformer1d(nn.Module):
         fixed_embedding = self.fixed_embedding(embedding) # [B, L, D]
         if embedding_mask_proba > 0.0:
             # Randomly mask embedding, but mask with position-wise varying embeddings
+=======
+                features: Optional[Tensor] = None,
+               embedding_scale: float = 1.0) -> Tensor:
+        
+        b, device = embedding.shape[0], embedding.device
+        fixed_embedding = self.fixed_embedding(embedding)
+        if embedding_mask_proba > 0.0:
+            # Randomly mask embedding
+>>>>>>> 4baf786fac4617686d5794dc5cb699b247b23ce9
             batch_mask = rand_bool(
                 shape=(b, 1, 1), proba=embedding_mask_proba, device=device
             )
@@ -399,18 +431,25 @@ class Transformer1d(nn.Module):
         
         return x
         
+<<<<<<< HEAD
     def forward(self,
                 x: Tensor, 
+=======
+    def forward(self, x: Tensor, 
+>>>>>>> 4baf786fac4617686d5794dc5cb699b247b23ce9
                 time: Tensor, 
                 embedding_mask_proba: float = 0.0,
                 embedding: Optional[Tensor] = None, 
                 features: Optional[Tensor] = None,
                embedding_scale: float = 1.0) -> Tensor:
+<<<<<<< HEAD
         '''
         x shape : (B, 1, 256)
         time : (B, 1)
         embedding : bert dur
         '''
+=======
+>>>>>>> 4baf786fac4617686d5794dc5cb699b247b23ce9
         
         b, device = embedding.shape[0], embedding.device
         fixed_embedding = self.fixed_embedding(embedding)

@@ -1168,9 +1168,12 @@ INFO:2025-02-05 11:22:36,213: Validation loss: 0.670
 
 
 
+<<<<<<< HEAD
 INFO:2025-02-10 01:19:18,385: Epoch [1/200], Step [10/12500], Mel Loss: 1.43965, Gen Loss: 5.67467, Disc Loss: 5.26912, Mono Loss: 0.16276, S2S Loss: 1.59259, SLM Loss: 3.00402
 INFO:2025-02-10 01:20:39,157: Epoch [1/200], Step [10/12500], Mel Loss: 1.33912, Gen Loss: 5.16871, Disc Loss: 4.98201, Mono Loss: 0.16523, S2S Loss: 1.63420, SLM Loss: 3.01604
 INFO:2025-02-10 01:21:09,694: Epoch [1/200], Step [20/12500], Mel Loss: 0.83457, Gen Loss: 4.41323, Disc Loss: 4.42205, Mono Loss: 0.06920, S2S Loss: 1.17483, SLM Loss: 3.02846
 INFO:2025-02-10 01:23:36,257: Epoch [1/200], Step [10/12500], Mel Loss: 1.41189, Gen Loss: 5.38450, Disc Loss: 5.20411, Mono Loss: 0.16054, S2S Loss: 1.52194, SLM Loss: 2.97781
 INFO:2025-02-10 01:24:06,730: Epoch [1/200], Step [20/12500], Mel Loss: 0.84731, Gen Loss: 4.91020, Disc Loss: 4.60696, Mono Loss: 0.07100, S2S Loss: 1.33729, SLM Loss: 3.01808
 INFO:2025-02-10 01:25:08,820: Epoch [1/200], Step [10/12500], Mel Loss: 1.37717, Gen Loss: 5.42712, Disc Loss: 5.40362, Mono Loss: 0.16359, S2S Loss: 1.50157, SLM Loss: 3.02279
+=======
+>>>>>>> 4baf786fac4617686d5794dc5cb699b247b23ce9

@@ -18,7 +18,11 @@ class ASRCNN(nn.Module):
         self.n_token = n_token
         self.n_down = 1
         self.to_mfcc = MFCC()
+<<<<<<< HEAD
         self.init_cnn = ConvNorm(input_dim//2, hidden_dim, kernel_size=7, padding=3, stride=2) # downsampling을 하네
+=======
+        self.init_cnn = ConvNorm(input_dim//2, hidden_dim, kernel_size=7, padding=3, stride=2)
+>>>>>>> 4baf786fac4617686d5794dc5cb699b247b23ce9
         self.cnns = nn.Sequential(
             *[nn.Sequential(
                 ConvBlock(hidden_dim),
