@@ -716,7 +716,7 @@ def main(config_path):
 
                     if bib >= 5:
                         break
-        else:
+        else: # joint training
             # generating sampled speech from text directly
             with torch.no_grad():
                 # compute reference styles
