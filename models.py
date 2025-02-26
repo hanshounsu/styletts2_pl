@@ -467,7 +467,7 @@ class DurationProsodyPredictor(nn.Module):
 
     def forward(self, texts, style, text_lengths, alignment, m):
         """
-        texts : [B, emb1, T], style : [B, emb2], alignment : [B, T, L]
+        texts (BERT) : [B, emb1, T], style : [B, emb2], alignment : [B, T, L], m : mask
         """
         d = self.text_encoder(texts, style, text_lengths, m)
         

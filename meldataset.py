@@ -82,7 +82,7 @@ class FilePathDataset(torch.utils.data.Dataset):
         _data_list = [l.strip().split('|') for l in data_list] # lines from .txt
         self.data_list = [data  if len(data) == 3 else (*data, '0') for data in _data_list]
         if not validation:
-            self.data_list = self.data_list[-10:]
+            self.data_list = self.data_list[-9:]
         self.text_cleaner = TextCleaner() # class that transforms {number + alphabet + ipa} sets to int indices
         self.sr = sr
 
