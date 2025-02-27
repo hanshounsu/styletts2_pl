@@ -284,7 +284,7 @@ def main(config_path):
                 t_en = model.text_encoder(texts, input_lengths, text_mask)
                 acoustic_text_gt_upsampled = (t_en @ s2s_attn_mono)
 
-                d_gt = s2s_attn_mono.sum(axis=-1).detach()
+                gt_dur = s2s_attn_mono.sum(axis=-1).detach()
                 
                 # compute reference styles
                 if multispeaker and epoch >= diff_epoch:
@@ -456,7 +456,7 @@ def main(config_path):
             loss_ce = 0
             loss_dur = 0
             # TODO : 이쪽 보기 (240226)
-            for _s2s_pred, _text_input, _text_length in zip(pred_dur, (d_gt), input_lengths): # d_gt : groundtruth(provided by acoustic module) duration
+            for _s2s_pred, _text_input, _text_length in zip(pred_dur, (gt_dur), input_lengths): # gt_dur : groundtruth(provided by acoustic module) duration
                 _s2s_pred = _s2s_pred[:_text_length, :]
                 _text_input = _text_input[:_text_length].long()
                 _s2s_trg = torch.zeros_like(_s2s_pred)
@@ -515,7 +515,7 @@ def main(config_path):
                                  waves, 
                                  mel_input_length,
                                  ref_texts, 
-                                 ref_lengths, use_ind, s_trg.detach(), ref if multispeaker else None)
+                                 ref_lengths, use_ind, s_trg.detach(), ref_style if multispeaker else None)
 
                 if slm_out is None:
                     continue
@@ -622,7 +622,7 @@ def main(config_path):
                         t_en = model.text_encoder(texts, input_lengths, text_mask)
                         acoustic_text_gt_upsampled = (t_en @ s2s_attn_mono)
 
-                        d_gt = s2s_attn_mono.sum(axis=-1).detach()
+                        gt_dur = s2s_attn_mono.sum(axis=-1).detach()
 
                     # ss = []
                     # gs = []
@@ -684,7 +684,7 @@ def main(config_path):
 
                     loss_dur = 0
                     # TODO : 이쪽 보기 (240226)
-                    for _s2s_pred, _text_input, _text_length in zip(pred_dur, (d_gt), input_lengths):
+                    for _s2s_pred, _text_input, _text_length in zip(pred_dur, (gt_dur), input_lengths):
                         _s2s_pred = _s2s_pred[:_text_length, :]
                         _text_input = _text_input[:_text_length].long()
                         _s2s_trg = torch.zeros_like(_s2s_pred)
