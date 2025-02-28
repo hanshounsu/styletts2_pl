@@ -1,10 +1,11 @@
 seed_everything: 23
-# ckpt_path : checkpoints/2025-01-08T02-39-00/last.ckpt
+ckpt_path : Models/LibriTTS/second_stage/epoch_1st_00030.pth
+continue_second_stage_training: False # if false, load from first stage checkpoint
 wandb: True
 debug: False
 batch_size: &batch_size 1
 sample_rate: &sr 24000
-test_save_path: './results/'
+test_save_path: './results/second'
 
 trainer:
   # benchmark: True # only when input is constant, this significantly fluctuates the GPU memory otherwise!!
@@ -32,11 +33,6 @@ model:
   max_len: 350
   multispeaker: False
 
-  pretrained_model: ""
-  second_stage_load_pretrained: true
-  first_stage_path: 'checkpoints/2025-01-30T21-04-14/step=0009375-val/mel_loss=0.0835.ckpt'
-
-
   loss_params:
     lambda_mel: 5. # mel reconstruction loss
     lambda_gen: 1. # generator loss
@@ -53,7 +49,8 @@ model:
     lambda_diff: 1. # score matching loss (2nd stage)
     
   epochs:
-    TMA_epoch: 50 # TMA starting epoch (1st stage)
+    diff_epoch: 10 # style diffusion starting epoch (2nd stage)
+    joint_epoch: 15 # joint training starting epoch (2nd stage)
 
   slm:
     model: 'microsoft/wavlm-base-plus'
@@ -175,7 +172,24 @@ model:
     class_path: torch.optim.AdamW
     init_args:
       lr: 1.0e-4
+      betas: [0.0, 0.99]
+      eps: 1.0e-9
   
+  optimizer_bert:
+    class_path: torch.optim.AdamW
+    init_args:
+      lr: 1.0e-5
+      betas: [0.9, 0.99]
+      eps: 1.0e-9
+      weight_decay: 0.01
+  
+  optimizer_ft:
+    class_path: torch.optim.AdamW
+    init_args:
+      lr: 1.0e-5
+      betas: [0.0, 0.99]
+      eps: 1.0e-9
+      weight_decay: 1.0e-4
 
 data:
   train_path: "Data/train_list.txt"

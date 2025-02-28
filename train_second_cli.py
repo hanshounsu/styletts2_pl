@@ -22,6 +22,7 @@ class StyleTTS2CLI(LightningCLI):
         parser.add_argument("--batch_size", type=int, help="batch size",)
         parser.add_argument("--sample_rate", type=int, help="sample rate",)
         parser.add_argument("--test_save_path", type=str, help="test_save_path",)
+        parser.add_argument("--continue_second_stage_training", type=bool, default=False, help="checkpoint path",)
 
     def before_fit(self):
         if not self.config.fit.ckpt_path:  # if not resuming from checkpoint
@@ -31,9 +32,11 @@ class StyleTTS2CLI(LightningCLI):
                 os.path.dirname(self.config.fit.ckpt_path))
             print(colored("Continue training from checkpoint: ",
                   "red", attrs=['bold']), ckpt_date)
-            self.now = id = ckpt_date
+            if self.config.fit.continue_second_stage_training:
+                self.now = id = ckpt_date # bring the checkpoint date to the current date
+            else: self.now = id = datetime.datetime.now().strftime("%Y-%m-%dT%H-%M-%S") # start a new training session
         # Logging
-        wandb_logger = WandbLogger(save_dir=f"./logs/{self.now}",
+        wandb_logger = WandbLogger(save_dir=f"./logs/second/{self.now}",
                                    name=self.now,
                                    project="StyleTTS2",
                                    offline=(not self.config.fit.wandb),
@@ -42,7 +45,7 @@ class StyleTTS2CLI(LightningCLI):
 
         # Model checkpoint (automatically called after validation)
         model_checkpoint_callback = ModelCheckpoint(
-            dirpath=f'./checkpoints/{self.now}',
+            dirpath=f'./checkpoints/second/{self.now}',
             monitor='val/mel_loss',
             mode='min',
             save_top_k=20,
@@ -52,13 +55,12 @@ class StyleTTS2CLI(LightningCLI):
             filename='{step:07}-{val/mel_loss:.4f}')  # python recognized '/', '-' as '_'
 
         self.trainer.callbacks.append(model_checkpoint_callback)
-        self.config.fit.test_save_path = f"./results/{self.now}"
+        self.config.fit.test_save_path = f"./results/second/{self.now}"
         print(colored("Test results will be saved in: ", "green",
               attrs=['bold']), self.config.fit.test_save_path)
 
         # profiler = AdvancedProfiler(dirpath=f'./profiler/{self.now}', filename='profiler')
         # self.trainer.profiler = profiler
-
 
 def cli_main():
     cli = StyleTTS2CLI(Second, LJSpeechDataModule,

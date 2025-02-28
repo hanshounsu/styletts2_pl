@@ -45,9 +45,6 @@ class Second(pl.LightningModule):
                  multispeaker: bool,
                  epochs: dict,
                  loss_params: dict,
-                 pretrained_model: str,
-                 second_stage_load_pretrained: bool,
-                 first_stage_path: str,
                  slm: dict,
                  ASR: nn.Module,
                  ASR_checkpoint_path: str,
@@ -65,6 +62,8 @@ class Second(pl.LightningModule):
                  msd: nn.Module,
                  wd: nn.Module,
                  optimizer: OptimizerCallable = torch.optim.AdamW,
+                 optimizer_bert: OptimizerCallable = torch.optim.AdamW,
+                 optimizer_ft: OptimizerCallable = torch.optim.AdamW,
                 #  scheduler: LRSchedulerCallable = torch.optim.lr_scheduler.OneCycleLR,
                  ):
         super().__init__()
@@ -72,9 +71,11 @@ class Second(pl.LightningModule):
 
         # load pretrained models for text aligner and pitch extractor
         self.text_aligner, self.pitch_extractor = ASR, F0
-        params_ASR, params_F0 = torch.load(ASR_checkpoint_path, map_location='cpu')['model'], torch.load(F0_checkpoint_path, map_location='cpu')['net']
-        self.text_aligner.load_state_dict(params_ASR)
-        self.pitch_extractor.load_state_dict(params_F0)
+        
+        # these will be loaded from first stage
+        # params_ASR, params_F0 = torch.load(ASR_checkpoint_path, map_location='cpu')['model'], torch.load(F0_checkpoint_path, map_location='cpu')['net']
+        # self.text_aligner.load_state_dict(params_ASR)
+        # self.pitch_extractor.load_state_dict(params_F0) 
         self.n_down = 1
 
         self.plbert = load_plbert(PLBERT_dir)
@@ -100,7 +101,7 @@ class Second(pl.LightningModule):
                                                                load_only_params=True,
                                                                ignore_modules=['bert', 'bert_encoder', 'predictor', 'prosodic_style_encoder', 'msd', 'mpd', 'wd', 'diffusion'])
 
-        self.optimizer = optimizer
+        self.optimizer, self.optimizer_ft, self.optimizer_bert = optimizer, optimizer_ft, optimizer_bert
         self.automatic_optimization = False
 
         self.stft_loss = MultiResolutionSTFTLoss()
@@ -348,22 +349,35 @@ class Second(pl.LightningModule):
 
     def configure_optimizers(self):
         optimizers = [self.optimizer(model.parameters()) for model in [self.text_encoder,
-                                                      self.acoustic_style_encoder,
-                                                      self.decoder,
                                                       self.text_aligner,
                                                       self.pitch_extractor,
                                                       self.msd,
                                                       self.mpd]]
+        
+        optimizers_ft = [self.optimizer_ft(model.parameters()) for model in [self.acoustic_style_encoder,
+                                                      self.decoder]]
+        
+        optimizers_bert = [self.optimizer_bert(model.parameters()) for model in [self.plbert]]
+        
         schedulers = [torch.optim.lr_scheduler.OneCycleLR(
             optimizer,
-            max_lr=1.0e-4,
+            max_lr=optimizer.param_groups[0]['lr'],
             steps_per_epoch=len(self.trainer.datamodule.train_dataloader()),
             epochs=self.trainer.max_epochs,
-            pct_start=0.0,
-            div_factor=1,
-            final_div_factor=1,
+            pct_start=0.0, div_factor=1, final_div_factor=1,
         ) for optimizer in optimizers]
 
+        schedulers_ft_bert = [torch.optim.lr_scheduler.OneCycleLR(
+            optimizer,
+            max_lr=optimizer.param_groups[0]['lr'] * 2,
+            steps_per_epoch=len(self.trainer.datamodule.train_dataloader()),
+            epochs=self.trainer.max_epochs,
+            pct_start=0.0, div_factor=1, final_div_factor=1,
+        ) for optimizer in optimizers_ft + optimizers_bert]
+
+        optimizers += (optimizers_ft + optimizers_bert)
+        schedulers += schedulers_ft_bert
+    
         return [{"optimizer": optimizer, "lr_scheduler": {"scheduler": scheduler, "interval": "step"}} for optimizer, scheduler in zip(optimizers, schedulers)]
 
 
@@ -391,95 +405,8 @@ logger.addHandler(handler)
 @click.command()
 @click.option('-p', '--config_path', default='Configs/config.yml', type=str)
 def main(config_path):
-    config = yaml.safe_load(open(config_path))
-
-    log_dir = config['log_dir']
-    if not osp.exists(log_dir):
-        os.makedirs(log_dir, exist_ok=True)
-    shutil.copy(config_path, osp.join(log_dir, osp.basename(config_path)))
-    writer = SummaryWriter(log_dir + "/tensorboard")
-
-    # write logs
-    file_handler = logging.FileHandler(osp.join(log_dir, 'train.log'))
-    file_handler.setLevel(logging.DEBUG)
-    file_handler.setFormatter(logging.Formatter(
-        '%(levelname)s:%(asctime)s: %(message)s'))
-    logger.addHandler(file_handler)
-
-    batch_size = config.get('batch_size', 10)
-
-    epochs = config.get('epochs_2nd', 200)
-    save_freq = config.get('save_freq', 2)
-    log_interval = config.get('log_interval', 10)
-    saving_epoch = config.get('save_freq', 2)
-
-    data_params = config.get('data_params', None)
-    sr = config['preprocess_params'].get('sr', 24000)
-    train_path = data_params['train_data']
-    val_path = data_params['val_data']
-    root_path = data_params['root_path']
-    min_length = data_params['min_length']
-    OOD_data = data_params['OOD_data']
-
-    max_len = config.get('max_len', 200)
-
-    loss_params = Munch(config['loss_params'])
-    diff_epoch = loss_params.diff_epoch
-    joint_epoch = loss_params.joint_epoch
-
-    optimizer_params = Munch(config['optimizer_params'])
-
-    train_list, val_list = get_data_path_list(train_path, val_path)
+ 
     device = 'cuda'
-
-    train_dataloader = build_dataloader(train_list,
-                                        root_path,
-                                        OOD_data=OOD_data,
-                                        min_length=min_length,
-                                        batch_size=batch_size,
-                                        num_workers=2,
-                                        dataset_config={},
-                                        device=device)
-
-    val_dataloader = build_dataloader(val_list,
-                                      root_path,
-                                      OOD_data=OOD_data,
-                                      min_length=min_length,
-                                      batch_size=batch_size,
-                                      validation=True,
-                                      num_workers=0,
-                                      device=device,
-                                      dataset_config={})
-
-    # load pretrained ASR model
-    ASR_config = config.get('ASR_config', False)
-    ASR_path = config.get('ASR_path', False)
-    text_aligner = load_ASR_models(ASR_path, ASR_config)
-
-    # load pretrained F0 model
-    F0_path = config.get('F0_path', False)
-    pitch_extractor = load_F0_models(F0_path)
-
-    # load PL-BERT model
-    BERT_path = config.get('PLBERT_dir', False)
-    plbert = load_plbert(BERT_path)
-
-    # build model
-    model_params = recursive_munch(config['model_params'])
-    multispeaker = model_params.multispeaker
-    model = build_model(model_params, text_aligner, pitch_extractor, plbert)
-    _ = [model[key].to(device) for key in model]
-
-    # DP
-    for key in model:
-        if key != "mpd" and key != "msd" and key != "wd":
-            model[key] = MyDataParallel(model[key])
-
-    start_epoch = 0
-    iters = 0
-
-    load_pretrained = config.get('pretrained_model', '') != '' and config.get(
-        'second_stage_load_pretrained', False)
 
     if not load_pretrained:
         if config.get('first_stage_path', '') != '':
@@ -520,42 +447,6 @@ def main(config_path):
             sigma_min=0.0001, sigma_max=3.0, rho=9.0),  # empirical parameters
         clamp=False
     )
-
-    scheduler_params = {
-        "max_lr": optimizer_params.lr,
-        "pct_start": float(0),
-        "epochs": epochs,
-        "steps_per_epoch": len(train_dataloader),
-    }
-    scheduler_params_dict = {key: scheduler_params.copy() for key in model}
-    scheduler_params_dict['bert']['max_lr'] = optimizer_params.bert_lr * 2
-    scheduler_params_dict['decoder']['max_lr'] = optimizer_params.ft_lr * 2
-    scheduler_params_dict['acoustic_style_encoder']['max_lr'] = optimizer_params.ft_lr * 2
-
-    optimizer = build_optimizer({key: model[key].parameters() for key in model},
-                                scheduler_params_dict=scheduler_params_dict, lr=optimizer_params.lr)
-
-    # adjust BERT learning rate
-    for g in optimizer.optimizers['bert'].param_groups:
-        g['betas'] = (0.9, 0.99)
-        g['lr'] = optimizer_params.bert_lr
-        g['initial_lr'] = optimizer_params.bert_lr
-        g['min_lr'] = 0
-        g['weight_decay'] = 0.01
-
-    # adjust acoustic module learning rate
-    for module in ["decoder", "acoustic_style_encoder"]:
-        for g in optimizer.optimizers[module].param_groups:
-            g['betas'] = (0.0, 0.99)
-            g['lr'] = optimizer_params.ft_lr
-            g['initial_lr'] = optimizer_params.ft_lr
-            g['min_lr'] = 0
-            g['weight_decay'] = 1e-4
-
-    # load models if there is a model
-    if load_pretrained:
-        model, optimizer, start_epoch, iters = load_checkpoint(model,  optimizer, config['pretrained_model'],
-                                                               load_only_params=config.get('load_only_params', True))
 
     n_down = model.text_aligner.n_down
 

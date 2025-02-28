@@ -168,6 +168,8 @@ model:
     class_path: torch.optim.AdamW
     init_args:
       lr: 1.0e-4
+      betas: [0.0, 0.99]
+      eps: 1.0e-9
   
 
 data:
