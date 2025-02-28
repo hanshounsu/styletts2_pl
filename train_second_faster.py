@@ -316,27 +316,11 @@ def main(config_path):
 
             # compute the style of the entire utterance from mel
             # this operation cannot be done in batch because of the avgpool layer (may need to work on masked avgpool)
-            # ss = []
-            # gs = []
-            # TODO : make this part parallel by removing adaptiveavgpool2d
-            prosodic_styles = []
-            acoustic_styles = []
-            for bib in range(len(mel_input_length)):
-                mel_length = int(mel_input_length[bib].item())
-                mel = mels[bib, :, :mel_input_length[bib]]
-                prosodic_style = model.prosodic_style_encoder(mel.unsqueeze(0).unsqueeze(1))
-                prosodic_styles.append(prosodic_style)
-                acoustic_style = model.acoustic_style_encoder(mel.unsqueeze(0).unsqueeze(1))
-                acoustic_styles.append(acoustic_style)
-            
-            timeelapsed("2")
-
-            # s_dur = torch.stack(ss).squeeze()  # global prosodic styles
-            # gs = torch.stack(gs).squeeze() # global acoustic styles
-            # s_trg = torch.cat([gs, s_dur], dim=-1).detach() # ground truth for denoiser
-            prosodic_styles = torch.stack(prosodic_styles).squeeze()  # global prosodic styles
-            acoustic_styles = torch.stack(acoustic_styles).squeeze() # global acoustic styles
+            # implemented this part parallelly
+            prosodic_styles = model.prosodic_style_encoder(mels.unsqueeze(1), mel_input_length)
+            acoustic_styles = model.acoustic_style_encoder(mels.unsqueeze(1), mel_input_length)
             s_trg = torch.cat([acoustic_styles, prosodic_styles], dim=-1).detach() # ground truth for denoiser
+            timeelapsed("2")
 
             bert_dur = model.bert(texts, attention_mask=(~text_mask).int()) # [B, L] -> [B, L, D]
             pred_bert = model.bert_encoder(bert_dur).transpose(-1, -2) # this is simple linear layer [B, D', L] 
@@ -430,6 +414,7 @@ def main(config_path):
             prosodic_style = model.prosodic_style_encoder(style_ref_mels.unsqueeze(1) if multispeaker else gt_mels.unsqueeze(1))
             acoustic_style = model.acoustic_style_encoder(style_ref_mels.unsqueeze(1) if multispeaker else gt_mels.unsqueeze(1))
             timeelapsed("6")
+
             
             with torch.no_grad():
                 F0_real, _, F0 = model.pitch_extractor(gt_mels.unsqueeze(1))
@@ -482,27 +467,12 @@ def main(config_path):
             loss_lm = wl(gt_wav.detach().squeeze(), y_rec.squeeze()).mean()
             timeelapsed("12")
 
-            loss_ce = 0
-            loss_dur = 0
-            # TODO : 이쪽 보기 (240226)
-            for _s2s_pred, _text_input, _text_length in zip(pred_dur, (gt_dur), input_lengths): # gt_dur : groundtruth(provided by acoustic module) duration
-                _s2s_pred = _s2s_pred[:_text_length, :] # _s2s_pred original shape : [L, max_dur(=50)] -> [_text_length, max_dur]
-                _text_input = _text_input[:_text_length].long() # _text_input original shape : [L] -> [_text_length] 
-                _s2s_trg = torch.zeros_like(_s2s_pred)
+            loss_dur, loss_ce = compute_losses_of_variable_length_durations(pred_dur, gt_dur, input_lengths)
+            print(loss_dur, loss_ce)
 
-                col_range = torch.arange(_s2s_trg.shape[1], device=_s2s_trg.device).detach().unsqueeze(0)  # shape: [1, max_dur]
-                _s2s_trg = (col_range < _text_input.unsqueeze(1)).float()  # shape: [L, max_dur] -> for each text frame, fill up 1s for number of duration
-
-                _dur_pred = torch.sigmoid(_s2s_pred).sum(axis=1)
-
-                loss_dur += F.l1_loss(_dur_pred[1:_text_length-1], 
-                                       _text_input[1:_text_length-1])
-                loss_ce += F.binary_cross_entropy_with_logits(_s2s_pred.flatten(), _s2s_trg.flatten())
-            
-            loss_ce /= texts.size(0)
-            loss_dur /= texts.size(0)
-            
             timeelapsed("13")
+
+
             g_loss = loss_params.lambda_mel * loss_mel + \
                      loss_params.lambda_F0 * loss_F0_rec + \
                      loss_params.lambda_ce * loss_ce + \
@@ -625,8 +595,8 @@ def main(config_path):
                 running_loss = 0
                 
                 print('Time elasped:', time.time()-start_time)
+                
             timeelapsed("16")
-            
         loss_test = 0
         loss_align = 0
         loss_f = 0
@@ -664,19 +634,12 @@ def main(config_path):
                     prosodic_styles = []
                     acoustic_styles = []
 
-                    for bib in range(len(mel_input_length)):
-                        mel_length = int(mel_input_length[bib].item())
-                        mel = mels[bib, :, :mel_input_length[bib]]
-                        prosodic_style = model.prosodic_style_encoder(mel.unsqueeze(0).unsqueeze(1))
-                        prosodic_styles.append(prosodic_style)
-                        acoustic_style = model.acoustic_style_encoder(mel.unsqueeze(0).unsqueeze(1))
-                        acoustic_styles.append(acoustic_style)
-
-                    prosodic_styles = torch.stack(prosodic_styles) # [B, 128]
-                    acoustic_styles = torch.stack(acoustic_styles) # [B, 128]
-                    if len(prosodic_styles.shape) == 3:
-                        prosodic_styles, acoustic_styles = prosodic_styles.squeeze(1), acoustic_styles.squeeze(1)
-                    s_trg = torch.cat([prosodic_styles, acoustic_styles], dim=-1).detach()
+                    # compute the style of the entire utterance from mel (validation)
+                    # this operation cannot be done in batch because of the avgpool layer (may need to work on masked avgpool)
+                    # implemented this part parallelly
+                    prosodic_styles = model.prosodic_style_encoder(mels.unsqueeze(1), mel_input_length)
+                    acoustic_styles = model.acoustic_style_encoder(mels.unsqueeze(1), mel_input_length)
+                    s_trg = torch.cat([acoustic_styles, prosodic_styles], dim=-1).detach() # TODO: but why do this here? (240228)
 
                     bert_dur = model.bert(texts, attention_mask=(~text_mask).int())
                     pred_bert = model.bert_encoder(bert_dur).transpose(-1, -2) 

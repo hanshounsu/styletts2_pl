@@ -163,6 +163,48 @@ class StyleEncoder(nn.Module):
     
         return s
 
+class StyleEncoder_P(nn.Module):
+    def __init__(self, dim_in=48, style_dim=48, max_conv_dim=384):
+        super().__init__()
+        blocks = []
+        blocks += [spectral_norm(nn.Conv2d(1, dim_in, 3, 1, 1))]
+
+        repeat_num = 4
+        for _ in range(repeat_num):
+            dim_out = min(dim_in*2, max_conv_dim)
+            blocks += [ResBlk(dim_in, dim_out, downsample='half')]
+            dim_in = dim_out
+
+        blocks += [nn.LeakyReLU(0.2)]
+        blocks += [spectral_norm(nn.Conv2d(dim_out, dim_out, 5, 1, 0))]
+        blocks += [nn.AdaptiveAvgPool2d(1)]
+        blocks += [nn.LeakyReLU(0.2)]
+        self.shared = nn.Sequential(*blocks)
+
+        self.unshared = nn.Linear(dim_out, style_dim)
+
+    def forward(self, x, mel_input_length=None):
+        h = self.shared[:7](x)
+        if mel_input_length is not None:
+            mel_input_length_mid = mel_input_length.float()
+            for _ in range(4):
+                mel_input_length_mid = torch.ceil(mel_input_length_mid / 2)
+            mel_input_length_mid = (mel_input_length_mid - 4).int()
+            # assert mel_input_length_mid.max() == h.shape[-1]
+            hs = []
+            for bib in range(len(h)):
+                hs.append(self.shared[7:](h[bib, :, :, :mel_input_length_mid[bib]]))
+            h = torch.stack(hs)
+            # h = torch.sum(h, dim=(-2,-1), keepdim=True) / mel_input_length_mid.unsqueeze(-1).unsqueeze(-1)
+        else:
+            h = self.shared[7:](h) # B, 512, 1, 1
+            # h = torch.mean(h, dim=(-2,-1), keepdim=True)
+
+        h = h.view(h.size(0), -1)
+        s = self.unshared(h)
+    
+        return s
+
 class LinearNorm(torch.nn.Module):
     def __init__(self, in_dim, out_dim, bias=True, w_init_gain='linear'):
         super(LinearNorm, self).__init__()
@@ -642,8 +684,8 @@ def build_model(args, text_aligner, pitch_extractor, bert):
     
     duration_prosody_predictor = DurationProsodyPredictor(style_dim=args.style_dim, d_hid=args.hidden_dim, nlayers=args.n_layer, max_dur=args.max_dur, dropout=args.dropout)
     
-    acoustic_style_encoder = StyleEncoder(dim_in=args.dim_in, style_dim=args.style_dim, max_conv_dim=args.hidden_dim) # acoustic style encoder
-    prosodic_style_encoder = StyleEncoder(dim_in=args.dim_in, style_dim=args.style_dim, max_conv_dim=args.hidden_dim) # prosodic style encoder
+    acoustic_style_encoder = StyleEncoder_P(dim_in=args.dim_in, style_dim=args.style_dim, max_conv_dim=args.hidden_dim) # acoustic style encoder
+    prosodic_style_encoder = StyleEncoder_P(dim_in=args.dim_in, style_dim=args.style_dim, max_conv_dim=args.hidden_dim) # prosodic style encoder
         
     # define diffusion model
     if args.multispeaker:

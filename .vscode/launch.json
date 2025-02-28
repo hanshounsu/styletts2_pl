@@ -34,18 +34,18 @@
             "console": "integratedTerminal"
         },
         {
-            "name": "train_second",
+            "name": "train_second faster",
             "type": "debugpy",
             "request": "launch",
             "cwd": "/home/hounsu/voice/StyleTTS2/",
-            "program": "./train_second.py",
+            "program": "./train_second_faster.py",
             "args": [
                 "--config_path",
                 "Configs/config_libritts.yml",
             ],
-            "env": {
-                "CUDA_VISIBLE_DEVICES": "0",
-            },
+            // "env": {
+            //     "CUDA_VISIBLE_DEVICES": "0",
+            // },
             "console": "integratedTerminal",
             "justMyCode": true
         },
