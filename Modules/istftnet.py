@@ -12,6 +12,59 @@ from scipy.signal import get_window
 
 LRELU_SLOPE = 0.1
 
+
+def custom_istft(stft_matrix, n_fft, hop_length, win_length, window):
+    """
+    Compute an inverse STFT that is TPU friendly.
+    
+    Args:
+        stft_matrix (torch.Tensor): Complex spectrogram of shape (B, num_frames, n_fft//2+1).
+        n_fft (int): FFT size used in the STFT.
+        hop_length (int): Hop (stride) length between frames.
+        win_length (int): Length of the window used in STFT.
+        window (torch.Tensor): 1D window tensor of shape (win_length,).
+    
+    Returns:
+        torch.Tensor: Reconstructed time-domain signal of shape (B, signal_length).
+    """
+    B, num_frames, freq_bins = stft_matrix.shape  # freq_bins should equal n_fft//2 + 1
+    
+    # Perform the inverse FFT along the last dimension.
+    # This returns a real-valued frame for each time slice.
+    frames = torch.fft.irfft(stft_matrix, n=n_fft, dim=-1)  # shape: (B, num_frames, n_fft)
+    
+    # Ensure the window has length n_fft. If win_length is smaller, pad it with zeros.
+    if win_length < n_fft:
+        full_window = torch.zeros(n_fft, device=window.device, dtype=window.dtype)
+        full_window[:win_length] = window
+    else:
+        full_window = window.to(stft_matrix.device)
+    
+    # The expected length of the output signal.
+    signal_length = hop_length * (num_frames - 1) + n_fft
+    
+    # Allocate tensors for the output signal and for accumulating the window overlap.
+    output = torch.zeros(B, signal_length, device=frames.device, dtype=frames.dtype)
+    window_sum = torch.zeros(B, signal_length, device=frames.device, dtype=frames.dtype)
+    
+    # Overlap-add each frame into the output signal.
+    for i in range(num_frames):
+        start = i * hop_length
+        end = start + n_fft
+        # Multiply each frame by the window.
+        output[:, start:end] += frames[:, i, :] * full_window
+        # Keep track of the sum of squared windows (for normalization).
+        window_sum[:, start:end] += full_window ** 2
+    
+    # Normalize the output signal to compensate for the overlapping windows.
+    # Avoid division by zero by using a small epsilon.
+    eps = 1e-8
+    nonzero = window_sum > eps
+    output[nonzero] /= window_sum[nonzero]
+    print("output shape and type: ", output.shape, output.dtype)
+    
+    return output
+
 class AdaIN1d(nn.Module):
     def __init__(self, style_dim, num_features):
         super().__init__()
@@ -92,15 +145,29 @@ class TorchSTFT(torch.nn.Module):
         forward_transform = torch.stft(
             input_data,
             self.filter_length, self.hop_length, self.win_length, window=self.window.to(input_data.device),
-            return_complex=True)
+            return_complex=False)
+        # print("forward_transform shape and type: ", forward_transform.shape, forward_transform.dtype)
+        # print("forward transform: ", forward_transform)
 
-        return torch.abs(forward_transform), torch.angle(forward_transform)
+        return torch.abs(forward_transform).real, torch.angle(forward_transform)
 
     def inverse(self, magnitude, phase):
-        inverse_transform = torch.istft(
-            magnitude * torch.exp(phase * 1j),
-            self.filter_length, self.hop_length, self.win_length, window=self.window.to(magnitude.device))
-
+        print("abc 6")
+        print("magnitude shape, type: ", magnitude.shape, magnitude.dtype)
+        print("phase shape, type: ", phase.shape, phase.dtype)
+        # print("mag * exp(phase * 1j) shape, type: ", (magnitude * torch.exp(phase * 1j)).shape, (magnitude * torch.exp(phase * 1j)).dtype)
+        # print("complex spectrum (torch.polar) shape, type: ", torch.polar(magnitude, phase))
+        # inverse_transform = torch.istft(
+        #     (magnitude * torch.exp(phase * 1j)).to("cpu"),
+        #     self.filter_length, hop_length=self.hop_length, win_length=self.win_length, window=self.window.to("cpu"))
+        # inverse_transform = torch.istft(
+        #     (magnitude * torch.exp(phase * 1j)),
+        #     self.filter_length, hop_length=self.hop_length, win_length=self.win_length, window=self.window.to(magnitude.device))
+        # inverse_transform = torch.istft(
+        #     torch.view_as_real((magnitude * torch.exp(phase * 1j))),
+        #     self.filter_length, hop_length=self.hop_length, win_length=self.win_length, window=self.window.to(magnitude.device), return_complex=False)
+        inverse_transform = custom_istft(magnitude * torch.exp(phase * 1j), self.filter_length, self.hop_length, self.win_length, self.window.to(magnitude.device))
+        print("abc 7")
         return inverse_transform.unsqueeze(-2)  # unsqueeze to stay consistent with conv_transpose1d implementation
 
     def forward(self, input_data):
@@ -349,16 +416,14 @@ class Generator(torch.nn.Module):
         
     def forward(self, x, s, f0):
         with torch.no_grad():
+            print("abc 3")
             f0 = self.f0_upsamp(f0[:, None]).transpose(1, 2)  # bs,n,t
 
             har_source, noi_source, uv = self.m_source(f0)
             har_source = har_source.transpose(1, 2).squeeze(1)
-<<<<<<< HEAD
             har_spec, har_phase = self.stft.transform(har_source) # (B, T)
-=======
-            har_spec, har_phase = self.stft.transform(har_source)
->>>>>>> 4baf786fac4617686d5794dc5cb699b247b23ce9
             har = torch.cat([har_spec, har_phase], dim=1)
+            print("har shape and type: ", har.shape, har.dtype)
         
         for i in range(self.num_upsamples):
             x = F.leaky_relu(x, LRELU_SLOPE)
@@ -377,10 +442,12 @@ class Generator(torch.nn.Module):
                 else:
                     xs += self.resblocks[i*self.num_kernels+j](x, s)
             x = xs / self.num_kernels
+        print("abc 4")
         x = F.leaky_relu(x)
         x = self.conv_post(x)
         spec = torch.exp(x[:,:self.post_n_fft // 2 + 1, :])
         phase = torch.sin(x[:, self.post_n_fft // 2 + 1:, :])
+        print("abc 5")
         return self.stft.inverse(spec, phase)
     
     def fw_phase(self, x, s):
@@ -506,44 +573,26 @@ class Decoder(nn.Module):
             F0_down = downlist[random.randint(0, 2)]
             downlist = [0, 3, 7, 15]
             N_down = downlist[random.randint(0, 3)]
-<<<<<<< HEAD
             # What does F0_down and N_down do? Smoothing the F0 and N? Why? (250209)
-=======
->>>>>>> 4baf786fac4617686d5794dc5cb699b247b23ce9
             if F0_down:
-                F0_curve = nn.functional.conv1d(F0_curve.unsqueeze(1), torch.ones(1, 1, F0_down).to('cuda'), padding=F0_down//2).squeeze(1) / F0_down
+                F0_curve = nn.functional.conv1d(F0_curve.unsqueeze(1), torch.ones(1, 1, F0_down).to(asr.device), padding=F0_down//2).squeeze(1) / F0_down
             if N_down:
-                N = nn.functional.conv1d(N.unsqueeze(1), torch.ones(1, 1, N_down).to('cuda'), padding=N_down//2).squeeze(1)  / N_down
+                N = nn.functional.conv1d(N.unsqueeze(1), torch.ones(1, 1, N_down).to(asr.device), padding=N_down//2).squeeze(1)  / N_down
 
-        
-<<<<<<< HEAD
         F0 = self.F0_conv(F0_curve.unsqueeze(1)) # (B, T) -> (B, 1, T//2)
         N = self.N_conv(N.unsqueeze(1)) # (B, T) -> (B, 1, T//2)
         
         x = torch.cat([asr, F0, N], axis=1)
         x = self.encode(x, s) # s is conditioned by AdaIN
-=======
-        F0 = self.F0_conv(F0_curve.unsqueeze(1))
-        N = self.N_conv(N.unsqueeze(1))
-        
-        x = torch.cat([asr, F0, N], axis=1)
-        x = self.encode(x, s)
->>>>>>> 4baf786fac4617686d5794dc5cb699b247b23ce9
-        
         asr_res = self.asr_res(asr)
         
         res = True
         for block in self.decode:
             if res:
-<<<<<<< HEAD
                 x = torch.cat([x, asr_res, F0, N], axis=1) # (B, 1090, T//2)
-=======
-                x = torch.cat([x, asr_res, F0, N], axis=1)
->>>>>>> 4baf786fac4617686d5794dc5cb699b247b23ce9
             x = block(x, s)
             if block.upsample_type != "none":
                 res = False
-                
         x = self.generator(x, s, F0_curve)
         return x
     

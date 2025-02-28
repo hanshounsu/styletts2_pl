@@ -4,13 +4,8 @@
 __pycache__
 lightning_logs/
 logs/
-<<<<<<< HEAD
 checkpoints/
 Models/
-=======
-
-Models/LJSpeech/
->>>>>>> 4baf786fac4617686d5794dc5cb699b247b23ce9
 
 # *.pth
 *.ckpt

@@ -1,0 +1,2586 @@
+entry_computation_layout {
+  parameters {
+    element_type: F32
+    dimensions: 1
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 1
+    dimensions: 1
+    dimensions: 3
+    layout {
+      minor_to_major: 2
+      minor_to_major: 1
+      minor_to_major: 0
+      tiles {
+        dimensions: 1
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    layout {
+      tiles {
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+  }
+  parameters {
+    element_type: F32
+    layout {
+      tiles {
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+  }
+  parameters {
+    element_type: F32
+    dimensions: 1
+    dimensions: 80
+    dimensions: 376
+    layout {
+      minor_to_major: 2
+      minor_to_major: 1
+      minor_to_major: 0
+      tiles {
+        dimensions: 8
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 1
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 1
+    dimensions: 1
+    dimensions: 3
+    layout {
+      minor_to_major: 2
+      minor_to_major: 1
+      minor_to_major: 0
+      tiles {
+        dimensions: 1
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    layout {
+      tiles {
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+  }
+  parameters {
+    element_type: F32
+    dimensions: 1
+    dimensions: 1
+    dimensions: 7
+    layout {
+      minor_to_major: 2
+      minor_to_major: 1
+      minor_to_major: 0
+      tiles {
+        dimensions: 1
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 1
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 1
+    dimensions: 512
+    layout {
+      minor_to_major: 1
+      minor_to_major: 0
+      tiles {
+        dimensions: 1
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 1024
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 1024
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 1024
+    dimensions: 512
+    layout {
+      minor_to_major: 1
+      minor_to_major: 0
+      tiles {
+        dimensions: 8
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F64
+    layout {
+      tiles {
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+  }
+  parameters {
+    element_type: F32
+    dimensions: 256
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 256
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 256
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 256
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 256
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 256
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 256
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 256
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 256
+    dimensions: 192
+    dimensions: 1
+    dimensions: 1
+    layout {
+      minor_to_major: 0
+      minor_to_major: 3
+      minor_to_major: 2
+      minor_to_major: 1
+      tiles {
+        dimensions: 1
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 192
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 256
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 192
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 256
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 192
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 256
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 192
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 256
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 192
+    dimensions: 128
+    dimensions: 1
+    dimensions: 1
+    layout {
+      minor_to_major: 1
+      minor_to_major: 3
+      minor_to_major: 2
+      minor_to_major: 0
+      tiles {
+        dimensions: 1
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 128
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 128
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 128
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 128
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 128
+    dimensions: 64
+    dimensions: 1
+    dimensions: 1
+    layout {
+      minor_to_major: 0
+      minor_to_major: 3
+      minor_to_major: 2
+      minor_to_major: 1
+      tiles {
+        dimensions: 1
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 64
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 64
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 64
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 64
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 64
+    dimensions: 64
+    dimensions: 3
+    dimensions: 3
+    layout {
+      minor_to_major: 1
+      minor_to_major: 0
+      minor_to_major: 3
+      minor_to_major: 2
+      tiles {
+        dimensions: 8
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 64
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 64
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 64
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 64
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 64
+    dimensions: 1
+    dimensions: 3
+    dimensions: 3
+    layout {
+      minor_to_major: 0
+      minor_to_major: 1
+      minor_to_major: 3
+      minor_to_major: 2
+      tiles {
+        dimensions: 1
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 128
+    dimensions: 128
+    dimensions: 3
+    dimensions: 3
+    layout {
+      minor_to_major: 1
+      minor_to_major: 0
+      minor_to_major: 3
+      minor_to_major: 2
+      tiles {
+        dimensions: 8
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 128
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 128
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 128
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 128
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 128
+    dimensions: 64
+    dimensions: 3
+    dimensions: 3
+    layout {
+      minor_to_major: 0
+      minor_to_major: 1
+      minor_to_major: 3
+      minor_to_major: 2
+      tiles {
+        dimensions: 8
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 192
+    dimensions: 192
+    dimensions: 3
+    dimensions: 3
+    layout {
+      minor_to_major: 1
+      minor_to_major: 0
+      minor_to_major: 3
+      minor_to_major: 2
+      tiles {
+        dimensions: 8
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 192
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 256
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 192
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 256
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 192
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 256
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 192
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 256
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 192
+    dimensions: 128
+    dimensions: 3
+    dimensions: 3
+    layout {
+      minor_to_major: 1
+      minor_to_major: 0
+      minor_to_major: 3
+      minor_to_major: 2
+      tiles {
+        dimensions: 8
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 256
+    dimensions: 256
+    dimensions: 3
+    dimensions: 3
+    layout {
+      minor_to_major: 1
+      minor_to_major: 0
+      minor_to_major: 3
+      minor_to_major: 2
+      tiles {
+        dimensions: 8
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 256
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 256
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 256
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 256
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 256
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 256
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 256
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 256
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 256
+    dimensions: 192
+    dimensions: 3
+    dimensions: 3
+    layout {
+      minor_to_major: 0
+      minor_to_major: 1
+      minor_to_major: 3
+      minor_to_major: 2
+      tiles {
+        dimensions: 8
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 1024
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 1024
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 1024
+    dimensions: 256
+    layout {
+      minor_to_major: 1
+      minor_to_major: 0
+      tiles {
+        dimensions: 8
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 1024
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 1024
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 1024
+    dimensions: 512
+    layout {
+      minor_to_major: 1
+      minor_to_major: 0
+      tiles {
+        dimensions: 8
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 1024
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 1024
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 1024
+    dimensions: 256
+    layout {
+      minor_to_major: 1
+      minor_to_major: 0
+      tiles {
+        dimensions: 8
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 64
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 64
+    dimensions: 512
+    dimensions: 1
+    layout {
+      minor_to_major: 1
+      minor_to_major: 2
+      minor_to_major: 0
+      tiles {
+        dimensions: 1
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 1
+    dimensions: 512
+    dimensions: 188
+    layout {
+      minor_to_major: 1
+      minor_to_major: 0
+      minor_to_major: 2
+      tiles {
+        dimensions: 1
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    layout {
+      tiles {
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+  }
+  parameters {
+    element_type: F32
+    dimensions: 1024
+    dimensions: 1090
+    dimensions: 1
+    layout {
+      minor_to_major: 0
+      minor_to_major: 2
+      minor_to_major: 1
+      tiles {
+        dimensions: 1
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 1024
+    dimensions: 1090
+    dimensions: 1
+    layout {
+      minor_to_major: 0
+      minor_to_major: 2
+      minor_to_major: 1
+      tiles {
+        dimensions: 1
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 1024
+    dimensions: 1090
+    dimensions: 1
+    layout {
+      minor_to_major: 0
+      minor_to_major: 2
+      minor_to_major: 1
+      tiles {
+        dimensions: 1
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 1024
+    dimensions: 514
+    dimensions: 1
+    layout {
+      minor_to_major: 0
+      minor_to_major: 2
+      minor_to_major: 1
+      tiles {
+        dimensions: 1
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 1024
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 1024
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 1024
+    dimensions: 1024
+    dimensions: 3
+    layout {
+      minor_to_major: 1
+      minor_to_major: 0
+      minor_to_major: 2
+      tiles {
+        dimensions: 8
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F64
+    layout {
+      tiles {
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+  }
+  parameters {
+    element_type: F32
+    dimensions: 2048
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 1024
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 2048
+    dimensions: 128
+    layout {
+      minor_to_major: 1
+      minor_to_major: 0
+      tiles {
+        dimensions: 8
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 128
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 128
+    dimensions: 512
+    layout {
+      minor_to_major: 1
+      minor_to_major: 0
+      tiles {
+        dimensions: 8
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 512
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 512
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    layout {
+      tiles {
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+  }
+  parameters {
+    element_type: F32
+    layout {
+      tiles {
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+  }
+  parameters {
+    element_type: F32
+    dimensions: 512
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 512
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 512
+    dimensions: 512
+    dimensions: 5
+    dimensions: 5
+    layout {
+      minor_to_major: 1
+      minor_to_major: 0
+      minor_to_major: 3
+      minor_to_major: 2
+      tiles {
+        dimensions: 8
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 512
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 512
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 512
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 512
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 512
+    dimensions: 512
+    dimensions: 3
+    dimensions: 3
+    layout {
+      minor_to_major: 1
+      minor_to_major: 0
+      minor_to_major: 3
+      minor_to_major: 2
+      tiles {
+        dimensions: 8
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 512
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 512
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 512
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 512
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 512
+    dimensions: 1
+    dimensions: 3
+    dimensions: 3
+    layout {
+      minor_to_major: 0
+      minor_to_major: 1
+      minor_to_major: 3
+      minor_to_major: 2
+      tiles {
+        dimensions: 1
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 512
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 512
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 512
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 512
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 512
+    dimensions: 512
+    dimensions: 3
+    dimensions: 3
+    layout {
+      minor_to_major: 1
+      minor_to_major: 0
+      minor_to_major: 3
+      minor_to_major: 2
+      tiles {
+        dimensions: 8
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 512
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 512
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 512
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 512
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 512
+    dimensions: 256
+    dimensions: 3
+    dimensions: 3
+    layout {
+      minor_to_major: 1
+      minor_to_major: 0
+      minor_to_major: 3
+      minor_to_major: 2
+      tiles {
+        dimensions: 8
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 256
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 256
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 256
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 256
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 256
+    dimensions: 1
+    dimensions: 3
+    dimensions: 3
+    layout {
+      minor_to_major: 0
+      minor_to_major: 1
+      minor_to_major: 3
+      minor_to_major: 2
+      tiles {
+        dimensions: 1
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 256
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 256
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 256
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 256
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 256
+    dimensions: 256
+    dimensions: 3
+    dimensions: 3
+    layout {
+      minor_to_major: 1
+      minor_to_major: 0
+      minor_to_major: 3
+      minor_to_major: 2
+      tiles {
+        dimensions: 8
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 256
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 256
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 256
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 256
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 256
+    dimensions: 128
+    dimensions: 3
+    dimensions: 3
+    layout {
+      minor_to_major: 1
+      minor_to_major: 0
+      minor_to_major: 3
+      minor_to_major: 2
+      tiles {
+        dimensions: 8
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 128
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 128
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 128
+    dimensions: 1
+    dimensions: 3
+    dimensions: 3
+    layout {
+      minor_to_major: 0
+      minor_to_major: 1
+      minor_to_major: 3
+      minor_to_major: 2
+      tiles {
+        dimensions: 1
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 128
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 128
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 128
+    dimensions: 128
+    dimensions: 3
+    dimensions: 3
+    layout {
+      minor_to_major: 1
+      minor_to_major: 0
+      minor_to_major: 3
+      minor_to_major: 2
+      tiles {
+        dimensions: 8
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 128
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 128
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 128
+    dimensions: 64
+    dimensions: 3
+    dimensions: 3
+    layout {
+      minor_to_major: 0
+      minor_to_major: 1
+      minor_to_major: 3
+      minor_to_major: 2
+      tiles {
+        dimensions: 8
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 64
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 64
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 64
+    dimensions: 1
+    dimensions: 3
+    dimensions: 3
+    layout {
+      minor_to_major: 0
+      minor_to_major: 1
+      minor_to_major: 3
+      minor_to_major: 2
+      tiles {
+        dimensions: 1
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 64
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 64
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 64
+    dimensions: 64
+    dimensions: 3
+    dimensions: 3
+    layout {
+      minor_to_major: 1
+      minor_to_major: 0
+      minor_to_major: 3
+      minor_to_major: 2
+      tiles {
+        dimensions: 8
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 64
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 64
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 64
+    dimensions: 1
+    dimensions: 3
+    dimensions: 3
+    layout {
+      minor_to_major: 0
+      minor_to_major: 1
+      minor_to_major: 3
+      minor_to_major: 2
+      tiles {
+        dimensions: 1
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 128
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 128
+    dimensions: 64
+    dimensions: 1
+    dimensions: 1
+    layout {
+      minor_to_major: 0
+      minor_to_major: 3
+      minor_to_major: 2
+      minor_to_major: 1
+      tiles {
+        dimensions: 1
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 256
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 256
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 256
+    dimensions: 128
+    dimensions: 1
+    dimensions: 1
+    layout {
+      minor_to_major: 1
+      minor_to_major: 3
+      minor_to_major: 2
+      minor_to_major: 0
+      tiles {
+        dimensions: 1
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 512
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 512
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 512
+    dimensions: 256
+    dimensions: 1
+    dimensions: 1
+    layout {
+      minor_to_major: 1
+      minor_to_major: 3
+      minor_to_major: 2
+      minor_to_major: 0
+      tiles {
+        dimensions: 1
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 1024
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 1024
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 1024
+    dimensions: 514
+    dimensions: 3
+    layout {
+      minor_to_major: 0
+      minor_to_major: 1
+      minor_to_major: 2
+      tiles {
+        dimensions: 8
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 1028
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 1024
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 1028
+    dimensions: 128
+    layout {
+      minor_to_major: 1
+      minor_to_major: 0
+      tiles {
+        dimensions: 8
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 1024
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 1024
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 1024
+    dimensions: 1024
+    dimensions: 3
+    layout {
+      minor_to_major: 1
+      minor_to_major: 0
+      minor_to_major: 2
+      tiles {
+        dimensions: 8
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 2048
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 1024
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 2048
+    dimensions: 128
+    layout {
+      minor_to_major: 1
+      minor_to_major: 0
+      tiles {
+        dimensions: 8
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 1024
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 1024
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 1024
+    dimensions: 1090
+    dimensions: 3
+    layout {
+      minor_to_major: 0
+      minor_to_major: 1
+      minor_to_major: 2
+      tiles {
+        dimensions: 8
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 2180
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 1024
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 2180
+    dimensions: 128
+    layout {
+      minor_to_major: 1
+      minor_to_major: 0
+      tiles {
+        dimensions: 8
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 1024
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 1024
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 1024
+    dimensions: 1024
+    dimensions: 3
+    layout {
+      minor_to_major: 1
+      minor_to_major: 0
+      minor_to_major: 2
+      tiles {
+        dimensions: 8
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 2048
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 1024
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 2048
+    dimensions: 128
+    layout {
+      minor_to_major: 1
+      minor_to_major: 0
+      tiles {
+        dimensions: 8
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 1024
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 1024
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 1024
+    dimensions: 1090
+    dimensions: 3
+    layout {
+      minor_to_major: 0
+      minor_to_major: 1
+      minor_to_major: 2
+      tiles {
+        dimensions: 8
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 2180
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 1024
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 2180
+    dimensions: 128
+    layout {
+      minor_to_major: 1
+      minor_to_major: 0
+      tiles {
+        dimensions: 8
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 1024
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 1024
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 1024
+    dimensions: 1024
+    dimensions: 3
+    layout {
+      minor_to_major: 1
+      minor_to_major: 0
+      minor_to_major: 2
+      tiles {
+        dimensions: 8
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 2048
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 1024
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 2048
+    dimensions: 128
+    layout {
+      minor_to_major: 1
+      minor_to_major: 0
+      tiles {
+        dimensions: 8
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 1024
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 1024
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 1024
+    dimensions: 1090
+    dimensions: 3
+    layout {
+      minor_to_major: 0
+      minor_to_major: 1
+      minor_to_major: 2
+      tiles {
+        dimensions: 8
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 2180
+    layout {
+      minor_to_major: 0
+      tiles {
+        dimensions: 1024
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+  }
+  parameters {
+    element_type: F32
+    dimensions: 2180
+    dimensions: 128
+    layout {
+      minor_to_major: 1
+      minor_to_major: 0
+      tiles {
+        dimensions: 8
+        dimensions: 128
+      }
+      tail_padding_alignment_in_elements: 1
+    }
+    is_dynamic_dimension: false
+    is_dynamic_dimension: false
+  }
+  result {
+    element_type: TUPLE
+    tuple_shapes {
+      element_type: F32
+      dimensions: 1
+      dimensions: 1090
+      dimensions: 175
+      layout {
+        minor_to_major: 1
+        minor_to_major: 0
+        minor_to_major: 2
+        tiles {
+          dimensions: 1
+          dimensions: 128
+        }
+        tail_padding_alignment_in_elements: 1
+      }
+      is_dynamic_dimension: false
+      is_dynamic_dimension: false
+      is_dynamic_dimension: false
+    }
+  }
+  parameter_names: "p0"
+  parameter_names: "p1"
+  parameter_names: "p2"
+  parameter_names: "p3"
+  parameter_names: "p4"
+  parameter_names: "p5"
+  parameter_names: "p6"
+  parameter_names: "p7"
+  parameter_names: "p8"
+  parameter_names: "p9"
+  parameter_names: "p10"
+  parameter_names: "p11"
+  parameter_names: "p12"
+  parameter_names: "p13"
+  parameter_names: "p14"
+  parameter_names: "p15"
+  parameter_names: "p16"
+  parameter_names: "p17"
+  parameter_names: "p18"
+  parameter_names: "p19"
+  parameter_names: "p20"
+  parameter_names: "p21"
+  parameter_names: "p22"
+  parameter_names: "p23"
+  parameter_names: "p24"
+  parameter_names: "p25"
+  parameter_names: "p26"
+  parameter_names: "p27"
+  parameter_names: "p28"
+  parameter_names: "p29"
+  parameter_names: "p30"
+  parameter_names: "p31"
+  parameter_names: "p32"
+  parameter_names: "p33"
+  parameter_names: "p34"
+  parameter_names: "p35"
+  parameter_names: "p36"
+  parameter_names: "p37"
+  parameter_names: "p38"
+  parameter_names: "p39"
+  parameter_names: "p40"
+  parameter_names: "p41"
+  parameter_names: "p42"
+  parameter_names: "p43"
+  parameter_names: "p44"
+  parameter_names: "p45"
+  parameter_names: "p46"
+  parameter_names: "p47"
+  parameter_names: "p48"
+  parameter_names: "p49"
+  parameter_names: "p50"
+  parameter_names: "p51"
+  parameter_names: "p52"
+  parameter_names: "p53"
+  parameter_names: "p54"
+  parameter_names: "p55"
+  parameter_names: "p56"
+  parameter_names: "p57"
+  parameter_names: "p58"
+  parameter_names: "p59"
+  parameter_names: "p60"
+  parameter_names: "p61"
+  parameter_names: "p62"
+  parameter_names: "p63"
+  parameter_names: "p64"
+  parameter_names: "p65"
+  parameter_names: "p66"
+  parameter_names: "p67"
+  parameter_names: "p68"
+  parameter_names: "p69"
+  parameter_names: "p70"
+  parameter_names: "p71"
+  parameter_names: "p72"
+  parameter_names: "p73"
+  parameter_names: "p74"
+  parameter_names: "p75"
+  parameter_names: "p76"
+  parameter_names: "p77"
+  parameter_names: "p78"
+  parameter_names: "p79"
+  parameter_names: "p80"
+  parameter_names: "p81"
+  parameter_names: "p82"
+  parameter_names: "p83"
+  parameter_names: "p84"
+  parameter_names: "p85"
+  parameter_names: "p86"
+  parameter_names: "p87"
+  parameter_names: "p88"
+  parameter_names: "p89"
+  parameter_names: "p90"
+  parameter_names: "p91"
+  parameter_names: "p92"
+  parameter_names: "p93"
+  parameter_names: "p94"
+  parameter_names: "p95"
+  parameter_names: "p96"
+  parameter_names: "p97"
+  parameter_names: "p98"
+  parameter_names: "p99"
+  parameter_names: "p100"
+  parameter_names: "p101"
+  parameter_names: "p102"
+  parameter_names: "p103"
+  parameter_names: "p104"
+  parameter_names: "p105"
+  parameter_names: "p106"
+  parameter_names: "p107"
+  parameter_names: "p108"
+  parameter_names: "p109"
+  parameter_names: "p110"
+  parameter_names: "p111"
+  parameter_names: "p112"
+  parameter_names: "p113"
+  parameter_names: "p114"
+  parameter_names: "p115"
+  parameter_names: "p116"
+  parameter_names: "p117"
+  parameter_names: "p118"
+  parameter_names: "p119"
+  parameter_names: "p120"
+  parameter_names: "p121"
+  parameter_names: "p122"
+  parameter_names: "p123"
+  parameter_names: "p124"
+  parameter_names: "p125"
+  parameter_names: "p126"
+  parameter_names: "p127"
+  parameter_names: "p128"
+  parameter_names: "p129"
+  parameter_names: "p130"
+  parameter_names: "p131"
+  parameter_names: "p132"
+  parameter_names: "p133"
+  parameter_names: "p134"
+  parameter_names: "p135"
+  parameter_names: "p136"
+  parameter_names: "p137"
+  parameter_names: "p138"
+  parameter_names: "p139"
+  parameter_names: "p140"
+  parameter_names: "p141"
+  parameter_names: "p142"
+  parameter_names: "p143"
+  parameter_names: "p144"
+  parameter_names: "p145"
+  parameter_names: "p146"
+  parameter_names: "p147"
+  parameter_names: "p148"
+  parameter_names: "p149"
+  parameter_names: "p150"
+  parameter_names: "p151"
+  parameter_names: "p152"
+  parameter_names: "p153"
+  parameter_names: "p154"
+  parameter_names: "p155"
+}
+replica_count: 1
+num_partitions: 1
+intra_op_parallelism_threads: -1
+debug_options {
+  xla_backend_optimization_level: 3
+  xla_eliminate_hlo_implicit_broadcast: true
+  xla_cpu_multi_thread_eigen: true
+  xla_gpu_cuda_data_dir: "./cuda_sdk_lib"
+  xla_llvm_enable_alias_scope_metadata: true
+  xla_llvm_enable_noalias_metadata: true
+  xla_llvm_enable_invariant_load_metadata: true
+  xla_force_host_platform_device_count: 1
+  xla_gpu_enable_dynamic_slice_fusion: true
+  xla_dump_hlo_as_text: true
+  xla_cpu_fast_math_honor_nans: true
+  xla_cpu_fast_math_honor_infs: true
+  xla_allow_excess_precision: true
+  xla_gpu_autotune_level: 4
+  xla_cpu_fast_math_honor_division: true
+  xla_cpu_fast_math_honor_functions: true
+  xla_dump_max_hlo_modules: -1
+  xla_cpu_enable_fast_min_max: true
+  xla_multiheap_size_constraint_per_heap: -1
+  xla_gpu_force_compilation_parallelism: 8
+  xla_gpu_strict_conv_algorithm_picker: true
+  xla_gpu_all_reduce_combine_threshold_bytes: 31457280
+  xla_gpu_enable_cudnn_frontend: true
+  xla_gpu_nccl_termination_timeout_seconds: -1
+  xla_gpu_enable_shared_constants: true
+  xla_gpu_redzone_scratch_max_megabytes: 4096
+  xla_gpu_shape_checks: RUNTIME
+  xla_cpu_enable_mlir_tiling_and_fusion: true
+  xla_dump_enable_mlir_pretty_form: true
+  xla_gpu_enable_triton_gemm: true
+  xla_gpu_enable_cudnn_int8x32_convolution_reordering: true
+  xla_cpu_enable_experimental_deallocation: true
+  xla_cpu_enable_mlir_fusion_outlining: true
+  xla_cpu_matmul_tiling_m_dim: 8
+  xla_cpu_matmul_tiling_n_dim: 8
+  xla_cpu_matmul_tiling_k_dim: 8
+  xla_gpu_lhs_enable_gpu_async_tracker: true
+  xla_gpu_collective_inflation_factor: 1
+  xla_gpu_graph_min_graph_size: 5
+  xla_gpu_enable_reassociation_for_converted_ar: true
+  xla_gpu_all_gather_combine_threshold_bytes: 31457280
+  xla_gpu_reduce_scatter_combine_threshold_bytes: 31457280
+  xla_gpu_enable_highest_priority_async_stream: true
+  xla_gpu_enable_priority_fusion: true
+  xla_gpu_auto_spmd_partitioning_memory_budget_ratio: 1.1
+  xla_gpu_redzone_padding_bytes: 8388608
+  xla_gpu_triton_fusion_level: 2
+  xla_gpu_collective_permute_decomposer_threshold: 9223372036854775807
+  xla_gpu_enable_split_k_autotuning: true
+  xla_gpu_enable_reduction_epilogue_fusion: true
+  xla_gpu_cublas_fallback: true
+  xla_gpu_filter_kernels_spilling_registers_on_autotuning: true
+  xla_debug_buffer_assignment_show_max: 15
+  xla_detailed_logging: true
+  xla_enable_dumping: true
+  xla_gpu_enable_all_gather_combine_by_dim: true
+  xla_gpu_enable_reduce_scatter_combine_by_dim: true
+  xla_gpu_enable_command_buffer: FUSION
+  xla_gpu_enable_command_buffer: CUBLAS
+  xla_gpu_enable_command_buffer: CUSTOM_CALL
+  xla_gpu_enable_command_buffer: CUDNN
+  xla_gpu_enable_cub_radix_sort: true
+  xla_gpu_memory_limit_slop_factor: 95
+  xla_gpu_threshold_for_windowed_einsum_mib: 100000
+  xla_gpu_enable_libnvptxcompiler: true
+  xla_gpu_enable_dot_strength_reduction: true
+  xla_gpu_enable_nccl_comm_splitting: true
+  xla_gpu_gemm_rewrite_size_threshold: 100
+  xla_reduce_window_rewrite_base_length: 16
+  xla_cpu_use_thunk_runtime: true
+  xla_llvm_force_inline_before_split: true
+  xla_gpu_mlir_emitter_level: 4
+  xla_cpu_prefer_vector_width: 256
+  xla_cmd_buffer_trace_cache_size: 16
+  xla_gpu_autotune_gemm_rtol: 0.1
+  xla_gpu_cudnn_gemm_max_plans: 5
+  xla_gpu_enable_libnvjitlink: true
+  xla_cpu_parallel_codegen_split_count: 32
+  xla_gpu_experimental_autotune_cache_mode: AUTOTUNE_CACHE_MODE_UPDATE
+  xla_gpu_executable_warn_stuck_timeout_seconds: 10
+  xla_gpu_executable_terminate_timeout_seconds: 30
+}
+static_device_assignment {
+  replica_count: 1
+  computation_count: 1
+  computation_devices {
+    replica_device_ids: 0
+  }
+}
+content_aware_computation_sorting: true
+allow_spmd_sharding_propagation_to_output: false
+allow_spmd_sharding_propagation_to_parameters: false

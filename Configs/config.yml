@@ -5,11 +5,7 @@ log_interval: 10
 device: "cuda"
 epochs_1st: 200 # number of epochs for first stage training (pre-training)
 epochs_2nd: 100 # number of peochs for second stage training (joint training)
-<<<<<<< HEAD
 batch_size: 1
-=======
-batch_size: 2
->>>>>>> 4baf786fac4617686d5794dc5cb699b247b23ce9
 max_len: 350 # maximum number of frames
 pretrained_model: ""
 second_stage_load_pretrained: true # set to true if the pre-trained model is for 2nd stage
@@ -23,7 +19,7 @@ PLBERT_dir: 'Utils/PLBERT/'
 data_params:
   train_data: "Data/train_list.txt"
   val_data: "Data/val_list.txt"
-  root_path: "/home/hounsu/Dataset/LJSpeech-1.1/wavs_24k"
+  root_path: "/home/hanskim/Dataset/LJSpeech-1.1/wavs_24k"
   OOD_data: "Data/OOD_texts.txt"
   min_length: 50 # sample until texts with this size are obtained for OOD texts
 
@@ -35,11 +31,7 @@ preprocess_params:
     hop_length: 300
 
 model_params:
-<<<<<<< HEAD
-  multispeaker: true
-=======
   multispeaker: false
->>>>>>> 4baf786fac4617686d5794dc5cb699b247b23ce9
 
   dim_in: 64 
   hidden_dim: 512
@@ -96,11 +88,7 @@ loss_params:
     
     lambda_mono: 1. # monotonic alignment loss (1st stage, TMA)
     lambda_s2s: 1. # sequence-to-sequence loss (1st stage, TMA)
-<<<<<<< HEAD
     TMA_epoch: 0 # TMA starting epoch (1st stage)
-=======
-    TMA_epoch: 50 # TMA starting epoch (1st stage)
->>>>>>> 4baf786fac4617686d5794dc5cb699b247b23ce9
 
     lambda_F0: 1. # F0 reconstruction loss (2nd stage)
     lambda_norm: 1. # norm reconstruction loss (2nd stage)
@@ -109,13 +97,8 @@ loss_params:
     lambda_sty: 1. # style reconstruction loss (2nd stage)
     lambda_diff: 1. # score matching loss (2nd stage)
     
-<<<<<<< HEAD
     diff_epoch: 0 # style diffusion starting epoch (2nd stage)
     joint_epoch: 0 # joint training starting epoch (2nd stage)
-=======
-    diff_epoch: 20 # style diffusion starting epoch (2nd stage)
-    joint_epoch: 50 # joint training starting epoch (2nd stage)
->>>>>>> 4baf786fac4617686d5794dc5cb699b247b23ce9
 
 optimizer_params:
   lr: 0.0001 # general learning rate

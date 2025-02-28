@@ -24,7 +24,7 @@ def stft(x, fft_size, hop_size, win_length, window):
     real = x_stft[..., 0]
     imag = x_stft[..., 1]
 
-    return torch.abs(x_stft).transpose(2, 1)
+    return torch.abs(x_stft).transpose(2, 1).real
 
 class SpecDiscriminator(nn.Module):
     """docstring for Discriminator."""
@@ -50,10 +50,16 @@ class SpecDiscriminator(nn.Module):
 
         fmap = []
         y = y.squeeze(1)
-        y = stft(y, self.fft_size, self.shift_size, self.win_length, self.window.to(y.get_device()))
+        print("abc y0 shape and type", y.shape, y.dtype)
+        y = stft(y, self.fft_size, self.shift_size, self.win_length, self.window.to(y.device))
         y = y.unsqueeze(1)
         for i, d in enumerate(self.discriminators):
+            print("abc y1 shape and type", y.shape, y.dtype)
             y = d(y)
+            # y_real_full = torch.view_as_real(y)
+            # y_real = y_real_full[..., 0]
+            # print("abc yreal shape and type", y_real.shape, y_real.dtype)
+            # print("abc yreal:", y_real)
             y = F.leaky_relu(y, LRELU_SLOPE)
             fmap.append(y)
 

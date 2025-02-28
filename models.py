@@ -21,6 +21,8 @@ from Modules.diffusion.diffusion import AudioDiffusionConditional
 
 from Modules.discriminators import MultiPeriodDiscriminator, MultiResSpecDiscriminator, WavLMDiscriminator
 
+import torch_xla.core.xla_model as xm
+
 from munch import Munch
 import yaml
 
@@ -157,9 +159,11 @@ class StyleEncoder(nn.Module):
         self.unshared = nn.Linear(dim_out, style_dim)
 
     def forward(self, x):
+        print("abc 1")
         h = self.shared(x)
         h = h.view(h.size(0), -1)
         s = self.unshared(h)
+        print("abc 2")
     
         return s
 
@@ -303,22 +307,26 @@ class TextEncoder(nn.Module):
         x = self.embedding(x)  # [B, T, emb]
         x = x.transpose(1, 2)  # [B, emb, T]
         m = m.to(input_lengths.device).unsqueeze(1)
-        x.masked_fill_(m, 0.0)
+        x = x.masked_fill(m, 0.0)
         
         for c in self.cnn:
             x = c(x)
-            x.masked_fill_(m, 0.0)
+            x = x.masked_fill(m, 0.0)
             
         x = x.transpose(1, 2)  # [B, T, chn]
 
-        input_lengths = input_lengths.cpu().numpy()
-        x = nn.utils.rnn.pack_padded_sequence(
-            x, input_lengths, batch_first=True, enforce_sorted=False)
+        # input_lengths = input_lengths.cpu().numpy()
+        input_lengths = input_lengths.to(x.device)
+        x = torch.nn.utils.rnn.pad_sequence(x, batch_first=True)
+        # x = nn.utils.rnn.pack_padded_sequence(
+        #     x, input_lengths, batch_first=True, enforce_sorted=False)
 
-        self.lstm.flatten_parameters()
+        # self.lstm.flatten_parameters()
+        xm.mark_step()
         x, _ = self.lstm(x)
-        x, _ = nn.utils.rnn.pad_packed_sequence(
-            x, batch_first=True)
+        xm.mark_step()
+        # x, _ = nn.utils.rnn.pad_packed_sequence(
+        #     x, batch_first=True)
                 
         x = x.transpose(-1, -2)
         x_pad = torch.zeros([x.shape[0], x.shape[1], m.shape[-1]])
@@ -326,7 +334,7 @@ class TextEncoder(nn.Module):
         x_pad[:, :, :x.shape[-1]] = x
         x = x_pad.to(x.device)
         
-        x.masked_fill_(m, 0.0)
+        x = x.masked_fill(m, 0.0)
         
         return x
 
@@ -542,7 +550,7 @@ class DurationEncoder(nn.Module):
         style : [B, S] -> broadcasted and concatenated to x & adalayernorm
         '''
         masks = m.to(text_lengths.device)
-        
+        print("x shape", x.shape)
         x = x.permute(2, 0, 1)
         s = style.expand(x.shape[0], x.shape[1], -1)
         x = torch.cat([x, s], axis=-1)
@@ -555,6 +563,7 @@ class DurationEncoder(nn.Module):
         for block in self.lstms:
             if isinstance(block, AdaLayerNorm):
                 x = block(x.transpose(-1, -2), style).transpose(-1, -2)
+                print("s shape", s.shape)
                 x = torch.cat([x, s.permute(1, -1, 0)], axis=1)
                 x.masked_fill_(masks.unsqueeze(-1).transpose(-1, -2), 0.0)
             else:
@@ -592,7 +601,7 @@ def load_F0_models(path):
     # load F0 model
 
     F0_model = JDCNet(num_class=1, seq_len=192)
-    params = torch.load(path, map_location='cpu')['net']
+    params = torch.load(path, map_location='cpu', weights_only=False)['net']
     F0_model.load_state_dict(params)
     _ = F0_model.train()
     
@@ -608,7 +617,7 @@ def load_ASR_models(ASR_MODEL_PATH, ASR_MODEL_CONFIG):
 
     def _load_model(model_config, model_path):
         model = ASRCNN(**model_config)
-        params = torch.load(model_path, map_location='cpu')['model']
+        params = torch.load(model_path, map_location='cpu', weights_only=False)['model']
         model.load_state_dict(params)
         return model
 
@@ -700,7 +709,7 @@ def build_model(args, text_aligner, pitch_extractor, bert):
     return nets
 
 def load_checkpoint(model, optimizer, path, load_only_params=True, ignore_modules=[]):
-    state = torch.load(path, map_location='cpu')
+    state = torch.load(path, map_location='cpu', weights_only=False)
     params = state['net']
     for key in model:
         if key in params and key not in ignore_modules:

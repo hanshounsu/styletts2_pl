@@ -8,10 +8,27 @@
             "name": "train_first",
             "type": "debugpy",
             "request": "launch",
-            "cwd": "/home/hounsu/voice/StyleTTS2/",
+            "cwd": "/home/hanskim/styletts2_pl/",
             "program": "./train_first.py",
             "args": [
                 "--config_path", "Configs/config.yml"
+            ],
+            "env": {
+                "NCCL_P2P_DISABLE": "1",
+                "NCCL_IB_DISABLE": "1"
+            },
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "train_first tpu",
+            "type": "debugpy",
+            "request": "launch",
+            "cwd": "/home/hanskim/styletts2_pl/",
+            "program": "./train_first_tpu.py",
+            "args": [
+                "--config_path",
+                "Configs/config.yml"
             ],
             "env": {
                 "NCCL_P2P_DISABLE": "1",
