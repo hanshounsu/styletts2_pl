@@ -3,7 +3,7 @@ import torch.nn.functional as F
 import torch.nn as nn
 from torch.nn import Conv1d, ConvTranspose1d, AvgPool1d, Conv2d
 from torch.nn.utils import weight_norm, remove_weight_norm, spectral_norm
-from .utils import init_weights, get_padding
+from .utils import init_weights, get_padding, custom_stft, custom_istft, custom_leaky_relu
 
 import math
 import random
@@ -12,58 +12,6 @@ from scipy.signal import get_window
 
 LRELU_SLOPE = 0.1
 
-
-def custom_istft(stft_matrix, n_fft, hop_length, win_length, window):
-    """
-    Compute an inverse STFT that is TPU friendly.
-    
-    Args:
-        stft_matrix (torch.Tensor): Complex spectrogram of shape (B, num_frames, n_fft//2+1).
-        n_fft (int): FFT size used in the STFT.
-        hop_length (int): Hop (stride) length between frames.
-        win_length (int): Length of the window used in STFT.
-        window (torch.Tensor): 1D window tensor of shape (win_length,).
-    
-    Returns:
-        torch.Tensor: Reconstructed time-domain signal of shape (B, signal_length).
-    """
-    B, num_frames, freq_bins = stft_matrix.shape  # freq_bins should equal n_fft//2 + 1
-    
-    # Perform the inverse FFT along the last dimension.
-    # This returns a real-valued frame for each time slice.
-    frames = torch.fft.irfft(stft_matrix, n=n_fft, dim=-1)  # shape: (B, num_frames, n_fft)
-    
-    # Ensure the window has length n_fft. If win_length is smaller, pad it with zeros.
-    if win_length < n_fft:
-        full_window = torch.zeros(n_fft, device=window.device, dtype=window.dtype)
-        full_window[:win_length] = window
-    else:
-        full_window = window.to(stft_matrix.device)
-    
-    # The expected length of the output signal.
-    signal_length = hop_length * (num_frames - 1) + n_fft
-    
-    # Allocate tensors for the output signal and for accumulating the window overlap.
-    output = torch.zeros(B, signal_length, device=frames.device, dtype=frames.dtype)
-    window_sum = torch.zeros(B, signal_length, device=frames.device, dtype=frames.dtype)
-    
-    # Overlap-add each frame into the output signal.
-    for i in range(num_frames):
-        start = i * hop_length
-        end = start + n_fft
-        # Multiply each frame by the window.
-        output[:, start:end] += frames[:, i, :] * full_window
-        # Keep track of the sum of squared windows (for normalization).
-        window_sum[:, start:end] += full_window ** 2
-    
-    # Normalize the output signal to compensate for the overlapping windows.
-    # Avoid division by zero by using a small epsilon.
-    eps = 1e-8
-    nonzero = window_sum > eps
-    output[nonzero] /= window_sum[nonzero]
-    print("output shape and type: ", output.shape, output.dtype)
-    
-    return output
 
 class AdaIN1d(nn.Module):
     def __init__(self, style_dim, num_features):
@@ -142,14 +90,18 @@ class TorchSTFT(torch.nn.Module):
         self.window = torch.from_numpy(get_window(window, win_length, fftbins=True).astype(np.float32))
 
     def transform(self, input_data):
-        forward_transform = torch.stft(
-            input_data,
-            self.filter_length, self.hop_length, self.win_length, window=self.window.to(input_data.device),
-            return_complex=False)
-        # print("forward_transform shape and type: ", forward_transform.shape, forward_transform.dtype)
-        # print("forward transform: ", forward_transform)
+        # forward_transform = torch.stft(
+        #     input_data,
+        #     self.filter_length, self.hop_length, self.win_length, window=self.window.to(input_data.device),
+        #     return_complex=True)
+        forward_transform = custom_stft(input_data,
+                                        self.filter_length,
+                                        self.hop_length,
+                                        self.win_length,
+                                        self.window.to(input_data.device), return_complex=True)
+        print("forward_transform shape and type: ", forward_transform.shape, forward_transform.dtype)
 
-        return torch.abs(forward_transform).real, torch.angle(forward_transform)
+        return torch.abs(forward_transform).real, torch.angle(forward_transform).real
 
     def inverse(self, magnitude, phase):
         print("abc 6")
@@ -426,7 +378,8 @@ class Generator(torch.nn.Module):
             print("har shape and type: ", har.shape, har.dtype)
         
         for i in range(self.num_upsamples):
-            x = F.leaky_relu(x, LRELU_SLOPE)
+            # x = F.leaky_relu(x, LRELU_SLOPE)
+            x = custom_leaky_relu(x, LRELU_SLOPE)
             x_source = self.noise_convs[i](har)
             x_source = self.noise_res[i](x_source, s)
 
@@ -443,7 +396,8 @@ class Generator(torch.nn.Module):
                     xs += self.resblocks[i*self.num_kernels+j](x, s)
             x = xs / self.num_kernels
         print("abc 4")
-        x = F.leaky_relu(x)
+        # x = F.leaky_relu(x)
+        x = custom_leaky_relu(x)
         x = self.conv_post(x)
         spec = torch.exp(x[:,:self.post_n_fft // 2 + 1, :])
         phase = torch.sin(x[:, self.post_n_fft // 2 + 1:, :])
@@ -452,7 +406,8 @@ class Generator(torch.nn.Module):
     
     def fw_phase(self, x, s):
         for i in range(self.num_upsamples):
-            x = F.leaky_relu(x, LRELU_SLOPE)
+            # x = F.leaky_relu(x, LRELU_SLOPE)
+            x = custom_leaky_relu(x, LRELU_SLOPE)
             x = self.ups[i](x)
             xs = None
             for j in range(self.num_kernels):
@@ -461,7 +416,8 @@ class Generator(torch.nn.Module):
                 else:
                     xs += self.resblocks[i*self.num_kernels+j](x, s)
             x = xs / self.num_kernels
-        x = F.leaky_relu(x)
+        # x = F.leaky_relu(x)
+        x = custom_leaky_relu(x)
         x = self.reflection_pad(x)
         x = self.conv_post(x)
         spec = torch.exp(x[:,:self.post_n_fft // 2 + 1, :])

@@ -275,6 +275,7 @@ def main(config_path):
             s = model.acoustic_style_encoder(st.unsqueeze(1) if multispeaker else gt.unsqueeze(1)) # But why input is gt (not st) for single speaker case?
             
             y_rec = model.decoder(en, F0_real, real_norm, s)
+            print('decoder finished')
             
             # discriminator loss
             
@@ -319,7 +320,9 @@ def main(config_path):
             
             running_loss += accelerator.gather(loss_mel).mean().item()
 
+            print('starting backward')
             accelerator.backward(g_loss)
+            print('end backward')
             
             optimizer.step('text_encoder')
             optimizer.step('acoustic_style_encoder')

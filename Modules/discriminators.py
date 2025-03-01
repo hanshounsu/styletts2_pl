@@ -4,7 +4,7 @@ import torch.nn as nn
 from torch.nn import Conv1d, AvgPool1d, Conv2d
 from torch.nn.utils import weight_norm, spectral_norm
 
-from .utils import get_padding
+from .utils import get_padding, custom_stft, custom_leaky_relu
 
 LRELU_SLOPE = 0.1
 
@@ -19,10 +19,9 @@ def stft(x, fft_size, hop_size, win_length, window):
     Returns:
         Tensor: Magnitude spectrogram (B, #frames, fft_size // 2 + 1).
     """
-    x_stft = torch.stft(x, fft_size, hop_size, win_length, window,
-            return_complex=True)
-    real = x_stft[..., 0]
-    imag = x_stft[..., 1]
+    # x_stft = torch.stft(x, fft_size, hop_size, win_length, window,
+    #         return_complex=False) # change return_complex=False for TPU
+    x_stft = custom_stft(x, fft_size, hop_size, win_length, window, return_complex=True)
 
     return torch.abs(x_stft).transpose(2, 1).real
 
@@ -52,6 +51,7 @@ class SpecDiscriminator(nn.Module):
         y = y.squeeze(1)
         print("abc y0 shape and type", y.shape, y.dtype)
         y = stft(y, self.fft_size, self.shift_size, self.win_length, self.window.to(y.device))
+        print("abc 2 y shape and type", y.shape, y.dtype)
         y = y.unsqueeze(1)
         for i, d in enumerate(self.discriminators):
             print("abc y1 shape and type", y.shape, y.dtype)
@@ -60,7 +60,8 @@ class SpecDiscriminator(nn.Module):
             # y_real = y_real_full[..., 0]
             # print("abc yreal shape and type", y_real.shape, y_real.dtype)
             # print("abc yreal:", y_real)
-            y = F.leaky_relu(y, LRELU_SLOPE)
+            # y = F.leaky_relu(y, LRELU_SLOPE)
+            y = custom_leaky_relu(y, LRELU_SLOPE)
             fmap.append(y)
 
         y = self.out(y)
@@ -126,7 +127,8 @@ class DiscriminatorP(torch.nn.Module):
 
         for l in self.convs:
             x = l(x)
-            x = F.leaky_relu(x, LRELU_SLOPE)
+            # x = F.leaky_relu(x, LRELU_SLOPE)
+            x = custom_leaky_relu(x, LRELU_SLOPE)
             fmap.append(x)
         x = self.conv_post(x)
         fmap.append(x)
@@ -186,7 +188,8 @@ class WavLMDiscriminator(nn.Module):
         fmap = []
         for l in self.convs:
             x = l(x)
-            x = F.leaky_relu(x, LRELU_SLOPE)
+            # x = F.leaky_relu(x, LRELU_SLOPE)
+            x = custom_leaky_relu(x, LRELU_SLOPE)
             fmap.append(x)
         x = self.conv_post(x)
         x = torch.flatten(x, 1, -1)
