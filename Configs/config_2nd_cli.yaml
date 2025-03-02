@@ -113,12 +113,12 @@ model:
       style_dim: *style_dim
       max_conv_dim: *hidden_dim
   
-  prosodic_style_encoder:
-    class_path: models.StyleEncoder
-    init_args:
-      dim_in: *dim_in
-      style_dim: *style_dim
-      max_conv_dim: *hidden_dim
+  # prosodic_style_encoder:
+  #   class_path: models.StyleEncoder
+  #   init_args:
+  #     dim_in: *dim_in
+  #     style_dim: *style_dim
+  #     max_conv_dim: *hidden_dim
     
 
   audio_diffusion_conditional:
@@ -148,7 +148,6 @@ model:
         init_args:
           mean: -3.0
           std: 1.0
-
       sigma_data: 0.2
       dynamic_threshold: 0.0
   
@@ -167,6 +166,14 @@ model:
       slm_layers: 13
       initial_channel: 64
   
+  slmadv_params:
+    min_len: 400 # minimum length of samples
+    max_len: 500 # maximum length of samples
+    batch_percentage: 0.5 # to prevent out of memory, only use half of the original batch size
+    iter: 20 # update the discriminator every this iterations of generator update
+    thresh: 5 # gradient norm above which the gradient is scaled
+    scale: 0.01 # gradient scaling factor for predictors from SLM discriminators
+    sig: 1.5 # sigma for differentiable duration modeling
 
   optimizer:
     class_path: torch.optim.AdamW
@@ -190,6 +197,7 @@ model:
       betas: [0.0, 0.99]
       eps: 1.0e-9
       weight_decay: 1.0e-4
+  
 
 data:
   train_path: "Data/train_list.txt"

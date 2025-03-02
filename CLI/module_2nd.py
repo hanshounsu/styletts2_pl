@@ -37,6 +37,8 @@ import pytorch_lightning as pl
 from lightning.pytorch.cli import OptimizerCallable, LRSchedulerCallable
 from Utils.PLBERT.util import load_plbert
 
+import copy
+
 
 class Second(pl.LightningModule):
     def __init__(self,
@@ -55,12 +57,13 @@ class Second(pl.LightningModule):
                  text_encoder: nn.Module,
                  prosody_predictor: nn.Module,
                  acoustic_style_encoder: nn.Module,
-                 prosodic_style_encoder: nn.Module,
+                #  prosodic_style_encoder: nn.Module,
                  audio_diffusion_conditional: nn.Module,
                  k_diffusion: nn.Module,
                  mpd: nn.Module,
                  msd: nn.Module,
                  wd: nn.Module,
+                 slmadv_params: dict,
                  optimizer: OptimizerCallable = torch.optim.AdamW,
                  optimizer_bert: OptimizerCallable = torch.optim.AdamW,
                  optimizer_ft: OptimizerCallable = torch.optim.AdamW,
@@ -76,30 +79,21 @@ class Second(pl.LightningModule):
         # params_ASR, params_F0 = torch.load(ASR_checkpoint_path, map_location='cpu')['model'], torch.load(F0_checkpoint_path, map_location='cpu')['net']
         # self.text_aligner.load_state_dict(params_ASR)
         # self.pitch_extractor.load_state_dict(params_F0) 
-        self.n_down = 1
+        self.n_down = self.text_aligner.n_down
 
-        self.plbert = load_plbert(PLBERT_dir)
+        self.bert = load_plbert(PLBERT_dir)
+        self.bert_encoder = nn.Linear(self.bert.config.hidden_size, self.prosody_predictor.text_encoder.d_model)
+
         self.decoder = decoder
         self.text_encoder = text_encoder
         self.prosody_predictor = prosody_predictor
         self.acoustic_style_encoder = acoustic_style_encoder
-        self.prosodic_style_encoder = prosodic_style_encoder
+        self.prosodic_style_encoder = copy.deepcopy(acoustic_style_encoder)
         self.k_diffusion = k_diffusion
         self.audio_diffusion_conditional = audio_diffusion_conditional
         self.msd = msd
         self.mpd = mpd
         # self.wd = wd
-
-        load_pretrained = pretrained_model != '' and second_stage_load_pretrained
-        if not load_pretrained:
-            if first_stage_path != '':
-                first_stage_path = osp.join(first_stage_path)
-                print('Loading the first stage model at %s ...' % first_stage_path)
-                model, _, start_epoch, iters = load_checkpoint(model,
-                                                               None,
-                                                               first_stage_path,
-                                                               load_only_params=True,
-                                                               ignore_modules=['bert', 'bert_encoder', 'predictor', 'prosodic_style_encoder', 'msd', 'mpd', 'wd', 'diffusion'])
 
         self.optimizer, self.optimizer_ft, self.optimizer_bert = optimizer, optimizer_ft, optimizer_bert
         self.automatic_optimization = False
@@ -112,6 +106,25 @@ class Second(pl.LightningModule):
                             model_sr=sr,
                             slm_sr=slm['sr'])
         
+        self.audio_diffusion_conditional.diffusion = self.k_diffusion
+        self.sampler = DiffusionSampler(
+            self.audio_diffusion_conditional.diffusion,
+            sampler=ADPM2Sampler(),
+            sigma_schedule=KarrasSchedule(
+                sigma_min=0.0001, sigma_max=3.0, rho=9.0),  # empirical parameters
+            clamp=False
+        )
+
+        self.stft_loss = MultiResolutionSTFTLoss()
+
+        self.slmadv = SLMAdversarialLoss([self.], self.wl, self.sampler,
+                                         slmadv_params['min_len'],
+                                         slmadv_params['max_len'],
+                                         batch_percentage=slmadv_params['batch_percentage'],
+                                         skip_update=slmadv_params['iter'],
+                                         sig=slmadv_params['sig']
+                                         )
+
         self.loss_val = 0
         self.s2s_attn, self.en, self.gt, self.mel_input_length, self.waves = None, None, None, None, None
 
@@ -406,40 +419,6 @@ logger.addHandler(handler)
 @click.option('-p', '--config_path', default='Configs/config.yml', type=str)
 def main(config_path):
  
-    device = 'cuda'
-
-    if not load_pretrained:
-        if config.get('first_stage_path', '') != '':
-            first_stage_path = osp.join(log_dir, config.get(
-                'first_stage_path', 'first_stage.pth'))
-            print('Loading the first stage model at %s ...' % first_stage_path)
-            model, _, start_epoch, iters = load_checkpoint(model,
-                                                           None,
-                                                           first_stage_path,
-                                                           load_only_params=True,
-                                                           ignore_modules=['bert', 'bert_encoder', 'predictor', 'prosodic_style_encoder', 'msd', 'mpd', 'wd', 'diffusion'])  # keep starting epoch for tensorboard log
-
-            # these epochs should be counted from the start epoch
-            diff_epoch += start_epoch
-            joint_epoch += start_epoch
-            epochs += start_epoch
-
-            model.prosodic_style_encoder = copy.deepcopy(model.acoustic_style_encoder)
-        else:
-            raise ValueError(
-                'You need to specify the path to the first stage model.')
-
-    gl = GeneratorLoss(model.mpd, model.msd).to(device)
-    dl = DiscriminatorLoss(model.mpd, model.msd).to(device)
-    wl = WavLMLoss(model_params.slm.model,
-                   model.wd,
-                   sr,
-                   model_params.slm.sr).to(device)
-
-    gl = MyDataParallel(gl)
-    dl = MyDataParallel(dl)
-    wl = MyDataParallel(wl)
-
     sampler = DiffusionSampler(
         model.diffusion.diffusion,
         sampler=ADPM2Sampler(),
@@ -458,7 +437,6 @@ def main(config_path):
     criterion = nn.L1Loss()  # F0 loss (regression)
     torch.cuda.empty_cache()
 
-    stft_loss = MultiResolutionSTFTLoss().to(device)
 
     print('BERT', optimizer.optimizers['bert'])
     print('decoder', optimizer.optimizers['decoder'])

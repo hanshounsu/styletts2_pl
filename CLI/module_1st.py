@@ -48,14 +48,10 @@ class First(pl.LightningModule):
         self.pitch_extractor.load_state_dict(params_F0)
         self.n_down = 1
 
-        self.plbert = load_plbert(PLBERT_dir)
         self.decoder = decoder
         self.text_encoder = text_encoder
         self.prosody_predictor = prosody_predictor
         self.acoustic_style_encoder = acoustic_style_encoder
-        self.prosodic_style_encoder = prosodic_style_encoder
-        self.k_diffusion = k_diffusion
-        self.audio_diffusion_conditional = audio_diffusion_conditional
         self.msd = msd
         self.mpd = mpd
         # self.wd = wd
