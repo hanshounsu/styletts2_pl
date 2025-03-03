@@ -95,10 +95,10 @@ class SLMAdversarialLoss(torch.nn.Module):
             s2s_attn[bib, :ref_lengths[bib],
                      :output_lengths[bib]] = attn_preds[bib]
 
-        asr_pred = t_en @ s2s_attn
+        acoustic_text_pred_upsampled = t_en @ s2s_attn
 
         # _, p_pred = self.model.duration_prosody_predictor(pred_bert, prosodic_style,
-        _, prosodic_text_gt_upsampled = self.model.duration_prosody_predictor(pred_bert, prosodic_style,
+        _, prosodic_text_pred_upsampled = self.model.duration_prosody_predictor(pred_bert, prosodic_style,
                                                                               ref_lengths,
                                                                               s2s_attn,
                                                                               text_mask)
@@ -108,9 +108,9 @@ class SLMAdversarialLoss(torch.nn.Module):
 
         # get clips
 
-        en = []
-        p_en = []
-        sp = []
+        acoustic_text_pred_upsampleds = []
+        prosodic_text_pred_upsampleds = []
+        styles = []
 
         F0_fakes = []
         N_fakes = []
@@ -123,12 +123,13 @@ class SLMAdversarialLoss(torch.nn.Module):
             if mel_length_gt <= mel_len or mel_length_pred <= mel_len:
                 continue
 
-            sp.append(s_preds[bib])
+            styles.append(s_preds[bib])
 
             random_start = np.random.randint(0, mel_length_pred - mel_len)
-            en.append(asr_pred[bib, :, random_start:random_start+mel_len])
-            p_en.append(
-                prosodic_text_gt_upsampled[bib, :, random_start:random_start+mel_len])
+            acoustic_text_pred_upsampleds.append(
+                acoustic_text_pred_upsampled[bib, :, random_start:random_start+mel_len])
+            prosodic_text_pred_upsampleds.append(
+                prosodic_text_pred_upsampled[bib, :, random_start:random_start+mel_len])
 
             # get ground truth clips
             random_start = np.random.randint(0, mel_length_gt - mel_len)
@@ -139,17 +140,19 @@ class SLMAdversarialLoss(torch.nn.Module):
             if len(wav) >= self.batch_percentage * len(waves):  # prevent OOM due to longer lengths
                 break
 
-        if len(sp) <= 1:
+        if len(styles) <= 1:
             return None
 
-        sp = torch.stack(sp)
+        styles = torch.stack(styles)
         wav = torch.stack(wav).float()
-        en = torch.stack(en)
-        p_en = torch.stack(p_en)
+        acoustic_text_pred_upsampleds = torch.stack(
+            acoustic_text_pred_upsampleds)
+        prosodic_text_pred_upsampleds = torch.stack(prosodic_text_pred_upsampleds)
 
         F0_fake, N_fake = self.model.duration_prosody_predictor.F0Ntrain(
-            p_en, sp[:, 128:])
-        y_pred = self.model.decoder(en, F0_fake, N_fake, sp[:, :128])
+            prosodic_text_pred_upsampleds, styles[:, 128:])
+        y_pred = self.model.decoder(
+            acoustic_text_pred_upsampleds, F0_fake, N_fake, styles[:, :128])
 
         # discriminator loss
         if (iters + 1) % self.skip_update == 0:
