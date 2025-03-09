@@ -21,6 +21,23 @@
             "justMyCode": false
         },
         {
+            "name": "train_first jax",
+            "type": "debugpy",
+            "request": "launch",
+            "cwd": "/home/hanskim/styletts2_pl/",
+            "program": "./train_first_jax.py",
+            "args": [
+                "--config_path",
+                "Configs/config_libritts_jax.yml"
+            ],
+            "env": {
+                "NCCL_P2P_DISABLE": "1",
+                "NCCL_IB_DISABLE": "1"
+            },
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
             "name": "train_first tpu",
             "type": "debugpy",
             "request": "launch",

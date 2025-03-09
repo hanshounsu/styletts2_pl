@@ -1,254 +1,446 @@
-import torch
-from torch import nn
-import torch.nn.functional as F
-import torchaudio
-from transformers import AutoModel
+import jax
+import jax.numpy as jnp
+import flax.linen as nn
+from typing import List, Tuple, Any, Dict, Optional
+from flax.core import freeze, unfreeze
 
-class SpectralConvergengeLoss(torch.nn.Module):
-    """Spectral convergence loss module."""
-
-    def __init__(self):
-        """Initilize spectral convergence loss module."""
-        super(SpectralConvergengeLoss, self).__init__()
-
-    def forward(self, x_mag, y_mag):
-        """Calculate forward propagation.
+# We'll need a JAX-compatible mel spectrogram implementation
+class MelSpectrogramTransform:
+    """JAX implementation of MelSpectrogram transform"""
+    
+    def __init__(self, sample_rate=24000, n_fft=1024, win_length=600, hop_length=120):
+        """Initialize mel spectrogram transform."""
+        self.sample_rate = sample_rate
+        self.n_fft = n_fft
+        self.win_length = win_length
+        self.hop_length = hop_length
+        
+        # Precompute mel filterbank
+        import librosa
+        self.mel_basis = jnp.array(
+            librosa.filters.mel(sr=sample_rate, n_fft=n_fft, n_mels=80)
+        )
+        
+        # Hann window
+        self.window = jnp.hanning(win_length)
+    
+    def __call__(self, audio):
+        """Convert audio to mel spectrogram.
+        
         Args:
-            x_mag (Tensor): Magnitude spectrogram of predicted signal (B, #frames, #freq_bins).
-            y_mag (Tensor): Magnitude spectrogram of groundtruth signal (B, #frames, #freq_bins).
+            audio: (batch_size, samples) audio signal
+            
         Returns:
-            Tensor: Spectral convergence loss value.
+            (batch_size, n_mels, time) mel spectrogram
         """
-        return torch.norm(y_mag - x_mag, p=1) / torch.norm(y_mag, p=1)
+        # Pad audio if needed
+        pad_len = self.n_fft - self.win_length
+        audio = jnp.pad(audio, ((0, 0), (pad_len//2, pad_len//2)))
+        
+        # Compute STFT
+        stft = jax.vmap(self._stft)(audio)
+        
+        # Convert to mel scale
+        mel = jnp.einsum('bft,mf->bmt', jnp.abs(stft)**2, self.mel_basis)
+        
+        return mel
+    
+    def _stft(self, audio):
+        """Compute STFT for a single audio signal."""
+        # Frame the signal
+        frames = librosa.util.frame(audio, frame_length=self.n_fft, hop_length=self.hop_length)
+        
+        # Apply window
+        windowed = frames * self.window
+        
+        # Compute FFT
+        stft = jnp.fft.rfft(windowed, axis=0)
+        
+        return stft
 
-class STFTLoss(torch.nn.Module):
-    """STFT loss module."""
 
-    def __init__(self, fft_size=1024, shift_size=120, win_length=600, window=torch.hann_window):
-        """Initialize STFT loss module."""
-        super(STFTLoss, self).__init__()
+class SpectralConvergenceLoss:
+    """Spectral convergence loss function."""
+    
+    def __call__(self, x_mag, y_mag):
+        """Calculate spectral convergence loss.
+        
+        Args:
+            x_mag: Magnitude spectrogram of predicted signal (B, #frames, #freq_bins).
+            y_mag: Magnitude spectrogram of groundtruth signal (B, #frames, #freq_bins).
+            
+        Returns:
+            Spectral convergence loss value.
+        """
+        return jnp.linalg.norm(y_mag - x_mag, ord=1) / jnp.linalg.norm(y_mag, ord=1)
+
+
+class STFTLoss:
+    """STFT loss function."""
+    
+    def __init__(self, fft_size=1024, shift_size=120, win_length=600):
+        """Initialize STFT loss."""
         self.fft_size = fft_size
         self.shift_size = shift_size
         self.win_length = win_length
-        self.to_mel = torchaudio.transforms.MelSpectrogram(sample_rate=24000, n_fft=fft_size, win_length=win_length, hop_length=shift_size, window_fn=window)
-
-        self.spectral_convergenge_loss = SpectralConvergengeLoss()
-
-    def forward(self, x, y):
-        """Calculate forward propagation.
+        self.to_mel = MelSpectrogramTransform(
+            sample_rate=24000, 
+            n_fft=fft_size, 
+            win_length=win_length, 
+            hop_length=shift_size
+        )
+        self.spectral_convergence_loss = SpectralConvergenceLoss()
+    
+    def __call__(self, x, y):
+        """Calculate STFT loss.
+        
         Args:
-            x (Tensor): Predicted signal (B, T).
-            y (Tensor): Groundtruth signal (B, T).
+            x: Predicted signal (B, T).
+            y: Groundtruth signal (B, T).
+            
         Returns:
-            Tensor: Spectral convergence loss value.
-            Tensor: Log STFT magnitude loss value.
+            Spectral convergence loss value.
         """
         x_mag = self.to_mel(x)
         mean, std = -4, 4
-        x_mag = (torch.log(1e-5 + x_mag) - mean) / std
+        x_mag = (jnp.log(1e-5 + x_mag) - mean) / std
         
         y_mag = self.to_mel(y)
-        mean, std = -4, 4
-        y_mag = (torch.log(1e-5 + y_mag) - mean) / std
+        y_mag = (jnp.log(1e-5 + y_mag) - mean) / std
         
-        sc_loss = self.spectral_convergenge_loss(x_mag, y_mag)    
+        sc_loss = self.spectral_convergence_loss(x_mag, y_mag)
         return sc_loss
 
 
-class MultiResolutionSTFTLoss(torch.nn.Module):
-    """Multi resolution STFT loss module."""
-
-    def __init__(self,
-                 fft_sizes=[1024, 2048, 512],
-                 hop_sizes=[120, 240, 50],
-                 win_lengths=[600, 1200, 240],
-                 window=torch.hann_window):
-        """Initialize Multi resolution STFT loss module.
-        Args:
-            fft_sizes (list): List of FFT sizes.
-            hop_sizes (list): List of hop sizes.
-            win_lengths (list): List of window lengths.
-            window (str): Window function type.
-        """
-        super(MultiResolutionSTFTLoss, self).__init__()
+class MultiResolutionSTFTLoss:
+    """Multi-resolution STFT loss function."""
+    
+    def __init__(
+        self,
+        fft_sizes=[1024, 2048, 512],
+        hop_sizes=[120, 240, 50],
+        win_lengths=[600, 1200, 240],
+    ):
+        """Initialize multi-resolution STFT loss."""
         assert len(fft_sizes) == len(hop_sizes) == len(win_lengths)
-        self.stft_losses = torch.nn.ModuleList()
-        for fs, ss, wl in zip(fft_sizes, hop_sizes, win_lengths):
-            self.stft_losses += [STFTLoss(fs, ss, wl, window)]
-
-    def forward(self, x, y):
-        """Calculate forward propagation.
+        self.stft_losses = [
+            STFTLoss(fs, ss, wl)
+            for fs, ss, wl in zip(fft_sizes, hop_sizes, win_lengths)
+        ]
+    
+    def __call__(self, x, y):
+        """Calculate multi-resolution STFT loss.
+        
         Args:
-            x (Tensor): Predicted signal (B, T).
-            y (Tensor): Groundtruth signal (B, T).
+            x: Predicted signal (B, T).
+            y: Groundtruth signal (B, T).
+            
         Returns:
-            Tensor: Multi resolution spectral convergence loss value.
-            Tensor: Multi resolution log STFT magnitude loss value.
+            Multi-resolution spectral convergence loss value.
         """
         sc_loss = 0.0
         for f in self.stft_losses:
-            sc_l = f(x, y)
-            sc_loss += sc_l
+            sc_loss += f(x, y)
         sc_loss /= len(self.stft_losses)
-
+        
         return sc_loss
-    
-    
+
+
 def feature_loss(fmap_r, fmap_g):
+    """Calculate feature loss between real and generated feature maps."""
     loss = 0
     for dr, dg in zip(fmap_r, fmap_g):
         for rl, gl in zip(dr, dg):
-            loss += torch.mean(torch.abs(rl - gl))
-
-    return loss*2
+            loss += jnp.mean(jnp.abs(rl - gl))
+    
+    return loss * 2
 
 
 def discriminator_loss(disc_real_outputs, disc_generated_outputs):
+    """Calculate discriminator loss."""
     loss = 0
     r_losses = []
     g_losses = []
     for dr, dg in zip(disc_real_outputs, disc_generated_outputs):
-        r_loss = torch.mean((1-dr)**2)
-        g_loss = torch.mean(dg**2)
+        r_loss = jnp.mean((1 - dr) ** 2)
+        g_loss = jnp.mean(dg ** 2)
         loss += (r_loss + g_loss)
-        r_losses.append(r_loss.item())
-        g_losses.append(g_loss.item())
-
+        r_losses.append(float(r_loss))
+        g_losses.append(float(g_loss))
+    
     return loss, r_losses, g_losses
 
 
 def generator_loss(disc_outputs):
+    """Calculate generator loss."""
     loss = 0
     gen_losses = []
     for dg in disc_outputs:
-        l = torch.mean((1-dg)**2)
-        gen_losses.append(l)
+        l = jnp.mean((1 - dg) ** 2)
+        gen_losses.append(float(l))
         loss += l
-
+    
     return loss, gen_losses
 
-""" https://dl.acm.org/doi/abs/10.1145/3573834.3574506 """
+
 def discriminator_TPRLS_loss(disc_real_outputs, disc_generated_outputs):
+    """Calculate discriminator Two-Phase Relative Least Squares (TPRLS) loss."""
     loss = 0
     for dr, dg in zip(disc_real_outputs, disc_generated_outputs):
         tau = 0.04
-        m_DG = torch.median((dr-dg))
-        L_rel = torch.mean((((dr - dg) - m_DG)**2)[dr < dg + m_DG])
-        loss += tau - F.relu(tau - L_rel)
+        m_DG = jnp.median(dr - dg)
+        # Need to handle the conditional selection differently in JAX
+        # Create mask for dr < dg + m_DG
+        mask = dr < dg + m_DG
+        diff = (dr - dg) - m_DG
+        # Use where to conditionally compute the loss
+        squared_diff = jnp.where(mask, diff**2, 0.0)
+        # Use sum and count non-zeros for mean to avoid div by zero
+        count = jnp.sum(mask)
+        L_rel = jnp.sum(squared_diff) / jnp.maximum(count, 1)
+        
+        loss += tau - jax.nn.relu(tau - L_rel)
+    
     return loss
+
 
 def generator_TPRLS_loss(disc_real_outputs, disc_generated_outputs):
+    """Calculate generator Two-Phase Relative Least Squares (TPRLS) loss."""
     loss = 0
-    for dg, dr in zip(disc_real_outputs, disc_generated_outputs):
+    for dr, dg in zip(disc_real_outputs, disc_generated_outputs):
         tau = 0.04
-        m_DG = torch.median((dr-dg))
-        L_rel = torch.mean((((dr - dg) - m_DG)**2)[dr < dg + m_DG])
-        loss += tau - F.relu(tau - L_rel)
+        m_DG = jnp.median(dr - dg)
+        # Need to handle the conditional selection differently in JAX
+        # Create mask for dr < dg + m_DG
+        mask = dr < dg + m_DG
+        diff = (dr - dg) - m_DG
+        # Use where to conditionally compute the loss
+        squared_diff = jnp.where(mask, diff**2, 0.0)
+        # Use sum and count non-zeros for mean to avoid div by zero
+        count = jnp.sum(mask)
+        L_rel = jnp.sum(squared_diff) / jnp.maximum(count, 1)
+        
+        loss += tau - jax.nn.relu(tau - L_rel)
+    
     return loss
 
-class GeneratorLoss(torch.nn.Module):
 
+class GeneratorLoss:
+    """Generator loss function."""
+    
     def __init__(self, mpd, msd):
-        super(GeneratorLoss, self).__init__()
+        """Initialize generator loss."""
         self.mpd = mpd
         self.msd = msd
+    
+    def __call__(self, y, y_hat, mpd_params, msd_params):
+        """Calculate generator loss.
         
-    def forward(self, y, y_hat):
-        y_df_hat_r, y_df_hat_g, fmap_f_r, fmap_f_g = self.mpd(y, y_hat)
-        y_ds_hat_r, y_ds_hat_g, fmap_s_r, fmap_s_g = self.msd(y, y_hat)
+        Args:
+            y: Real audio
+            y_hat: Generated audio
+            mpd_params: Parameters for MPD
+            msd_params: Parameters for MSD
+            
+        Returns:
+            Total generator loss
+        """
+        y_df_hat_r, y_df_hat_g, fmap_f_r, fmap_f_g = self.mpd.apply(
+            {"params": mpd_params}, y, y_hat, method=self.mpd.forward_features
+        )
+        y_ds_hat_r, y_ds_hat_g, fmap_s_r, fmap_s_g = self.msd.apply(
+            {"params": msd_params}, y, y_hat, method=self.msd.forward_features
+        )
+        
         loss_fm_f = feature_loss(fmap_f_r, fmap_f_g)
         loss_fm_s = feature_loss(fmap_s_r, fmap_s_g)
-        loss_gen_f, losses_gen_f = generator_loss(y_df_hat_g)
-        loss_gen_s, losses_gen_s = generator_loss(y_ds_hat_g)
-
+        loss_gen_f, _ = generator_loss(y_df_hat_g)
+        loss_gen_s, _ = generator_loss(y_ds_hat_g)
+        
         loss_rel = generator_TPRLS_loss(y_df_hat_r, y_df_hat_g) + generator_TPRLS_loss(y_ds_hat_r, y_ds_hat_g)
         
         loss_gen_all = loss_gen_s + loss_gen_f + loss_fm_s + loss_fm_f + loss_rel
         
-        return loss_gen_all.mean()
-    
-class DiscriminatorLoss(torch.nn.Module):
+        return loss_gen_all
 
+
+class DiscriminatorLoss:
+    """Discriminator loss function."""
+    
     def __init__(self, mpd, msd):
-        super(DiscriminatorLoss, self).__init__()
+        """Initialize discriminator loss."""
         self.mpd = mpd
         self.msd = msd
+    
+    def __call__(self, y, y_hat, mpd_params, msd_params):
+        """Calculate discriminator loss.
         
-    def forward(self, y, y_hat):
-        print("disc y, y_hat shape: ", y.shape, y_hat.shape)
+        Args:
+            y: Real audio
+            y_hat: Generated audio
+            mpd_params: Parameters for MPD
+            msd_params: Parameters for MSD
+            
+        Returns:
+            Total discriminator loss
+        """
         # MPD
-        y_df_hat_r, y_df_hat_g, _, _ = self.mpd(y, y_hat)
-        loss_disc_f, losses_disc_f_r, losses_disc_f_g = discriminator_loss(y_df_hat_r, y_df_hat_g)
+        y_df_hat_r, y_df_hat_g, _, _ = self.mpd.apply(
+            {"params": mpd_params}, y, y_hat, method=self.mpd.forward_features
+        )
+        loss_disc_f, _, _ = discriminator_loss(y_df_hat_r, y_df_hat_g)
+        
         # MSD
-        y_ds_hat_r, y_ds_hat_g, _, _ = self.msd(y, y_hat)
-        loss_disc_s, losses_disc_s_r, losses_disc_s_g = discriminator_loss(y_ds_hat_r, y_ds_hat_g)
+        y_ds_hat_r, y_ds_hat_g, _, _ = self.msd.apply(
+            {"params": msd_params}, y, y_hat, method=self.msd.forward_features
+        )
+        loss_disc_s, _, _ = discriminator_loss(y_ds_hat_r, y_ds_hat_g)
         
         loss_rel = discriminator_TPRLS_loss(y_df_hat_r, y_df_hat_g) + discriminator_TPRLS_loss(y_ds_hat_r, y_ds_hat_g)
-
-
+        
         d_loss = loss_disc_s + loss_disc_f + loss_rel
         
-        return d_loss.mean()
-   
+        return d_loss
+
+
+class WavLMLoss:
+    """WavLM-based loss function."""
     
-class WavLMLoss(torch.nn.Module):
-
-    def __init__(self, model, wd, model_sr, slm_sr=16000):
-        super(WavLMLoss, self).__init__()
-        self.wavlm = AutoModel.from_pretrained(model)
-        self.wd = wd
-        self.resample = torchaudio.transforms.Resample(model_sr, slm_sr)
-     
-    def forward(self, wav, y_rec):
-        with torch.no_grad():
-            wav_16 = self.resample(wav)
-            wav_embeddings = self.wavlm(input_values=wav_16, output_hidden_states=True).hidden_states
-        y_rec_16 = self.resample(y_rec)
-        y_rec_embeddings = self.wavlm(input_values=y_rec_16.squeeze(1), output_hidden_states=True).hidden_states
-
+    def __init__(self, wavlm_model, wd, model_sr=24000, slm_sr=16000):
+        """Initialize WavLM loss."""
+        self.wavlm = wavlm_model  # This should be a JAX version of WavLM
+        self.wd = wd  # Discriminator
+        self.model_sr = model_sr
+        self.slm_sr = slm_sr
+        
+        # We would need a JAX-compatible resampler
+        try:
+            import librosa
+            self.resample = lambda audio: librosa.resample(
+                audio.astype(float), 
+                orig_sr=model_sr,
+                target_sr=slm_sr
+            )
+        except ImportError:
+            raise ImportError("librosa is required for WavLMLoss")
+    
+    def __call__(self, wav, y_rec, wavlm_params, wd_params):
+        """Calculate WavLM feature loss."""
+        # Resample to WavLM input rate
+        wav_16 = jax.vmap(self.resample)(wav)
+        
+        # Get WavLM embeddings for original audio (without gradient)
+        wav_embeddings = self.wavlm.apply(
+            {"params": wavlm_params}, 
+            input_values=wav_16, 
+            output_hidden_states=True,
+            method=self.wavlm.get_hidden_states
+        )
+        
+        # Resample generated audio
+        y_rec_16 = jax.vmap(self.resample)(jnp.squeeze(y_rec, axis=1))
+        
+        # Get WavLM embeddings for generated audio (with gradient)
+        y_rec_embeddings = self.wavlm.apply(
+            {"params": wavlm_params}, 
+            input_values=y_rec_16, 
+            output_hidden_states=True,
+            method=self.wavlm.get_hidden_states
+        )
+        
+        # Calculate feature loss across all layers
         floss = 0
         for er, eg in zip(wav_embeddings, y_rec_embeddings):
-            floss += torch.mean(torch.abs(er - eg))
+            floss += jnp.mean(jnp.abs(er - eg))
         
-        return floss.mean()
+        return floss
     
-    def generator(self, y_rec):
-        y_rec_16 = self.resample(y_rec)
-        y_rec_embeddings = self.wavlm(input_values=y_rec_16, output_hidden_states=True).hidden_states
-        y_rec_embeddings = torch.stack(y_rec_embeddings, dim=1).transpose(-1, -2).flatten(start_dim=1, end_dim=2)
-        y_df_hat_g = self.wd(y_rec_embeddings)
-        loss_gen = torch.mean((1-y_df_hat_g)**2)
+    def generator(self, y_rec, wavlm_params, wd_params):
+        """Calculate generator loss using WavLM features."""
+        y_rec_16 = jax.vmap(self.resample)(y_rec)
+        
+        # Get WavLM embeddings
+        y_rec_embeddings = self.wavlm.apply(
+            {"params": wavlm_params}, 
+            input_values=y_rec_16, 
+            output_hidden_states=True,
+            method=self.wavlm.get_hidden_states
+        )
+        
+        # Stack and reshape embeddings
+        y_rec_embeddings = jnp.stack(y_rec_embeddings, axis=1)
+        y_rec_embeddings = jnp.transpose(y_rec_embeddings, (0, 2, 1, 3))
+        y_rec_embeddings = jnp.reshape(y_rec_embeddings, 
+                                      (y_rec_embeddings.shape[0], -1, y_rec_embeddings.shape[-1]))
+        
+        # Apply discriminator
+        y_df_hat_g = self.wd.apply({"params": wd_params}, y_rec_embeddings)
+        
+        # Calculate generator loss
+        loss_gen = jnp.mean((1 - y_df_hat_g) ** 2)
         
         return loss_gen
     
-    def discriminator(self, wav, y_rec):
-        with torch.no_grad():
-            wav_16 = self.resample(wav)
-            wav_embeddings = self.wavlm(input_values=wav_16, output_hidden_states=True).hidden_states
-            y_rec_16 = self.resample(y_rec)
-            y_rec_embeddings = self.wavlm(input_values=y_rec_16, output_hidden_states=True).hidden_states
-
-            y_embeddings = torch.stack(wav_embeddings, dim=1).transpose(-1, -2).flatten(start_dim=1, end_dim=2)
-            y_rec_embeddings = torch.stack(y_rec_embeddings, dim=1).transpose(-1, -2).flatten(start_dim=1, end_dim=2)
-
-        y_d_rs = self.wd(y_embeddings)
-        y_d_gs = self.wd(y_rec_embeddings)
+    def discriminator(self, wav, y_rec, wavlm_params, wd_params):
+        """Calculate discriminator loss using WavLM features."""
+        # Process real audio (without gradient)
+        wav_16 = jax.vmap(self.resample)(wav)
+        wav_embeddings = self.wavlm.apply(
+            {"params": wavlm_params}, 
+            input_values=wav_16, 
+            output_hidden_states=True,
+            method=self.wavlm.get_hidden_states
+        )
+        
+        # Process generated audio (without gradient)
+        y_rec_16 = jax.vmap(self.resample)(y_rec)
+        y_rec_embeddings = self.wavlm.apply(
+            {"params": wavlm_params}, 
+            input_values=y_rec_16, 
+            output_hidden_states=True,
+            method=self.wavlm.get_hidden_states
+        )
+        
+        # Stack and reshape embeddings
+        y_embeddings = jnp.stack(wav_embeddings, axis=1)
+        y_embeddings = jnp.transpose(y_embeddings, (0, 2, 1, 3))
+        y_embeddings = jnp.reshape(y_embeddings, 
+                                 (y_embeddings.shape[0], -1, y_embeddings.shape[-1]))
+        
+        y_rec_embeddings = jnp.stack(y_rec_embeddings, axis=1)
+        y_rec_embeddings = jnp.transpose(y_rec_embeddings, (0, 2, 1, 3))
+        y_rec_embeddings = jnp.reshape(y_rec_embeddings, 
+                                     (y_rec_embeddings.shape[0], -1, y_rec_embeddings.shape[-1]))
+        
+        # Apply discriminator
+        y_d_rs = self.wd.apply({"params": wd_params}, y_embeddings)
+        y_d_gs = self.wd.apply({"params": wd_params}, y_rec_embeddings)
         
         y_df_hat_r, y_df_hat_g = y_d_rs, y_d_gs
         
-        r_loss = torch.mean((1-y_df_hat_r)**2)
-        g_loss = torch.mean((y_df_hat_g)**2)
+        # Calculate discriminator loss
+        r_loss = jnp.mean((1 - y_df_hat_r) ** 2)
+        g_loss = jnp.mean(y_df_hat_g ** 2)
         
         loss_disc_f = r_loss + g_loss
-                        
-        return loss_disc_f.mean()
-
-    def discriminator_forward(self, wav):
-        with torch.no_grad():
-            wav_16 = self.resample(wav)
-            wav_embeddings = self.wavlm(input_values=wav_16, output_hidden_states=True).hidden_states
-            y_embeddings = torch.stack(wav_embeddings, dim=1).transpose(-1, -2).flatten(start_dim=1, end_dim=2)
-
-        y_d_rs = self.wd(y_embeddings)
+        
+        return loss_disc_f
+    
+    def discriminator_forward(self, wav, wavlm_params, wd_params):
+        """Forward pass through discriminator using WavLM features."""
+        wav_16 = jax.vmap(self.resample)(wav)
+        wav_embeddings = self.wavlm.apply(
+            {"params": wavlm_params}, 
+            input_values=wav_16, 
+            output_hidden_states=True,
+            method=self.wavlm.get_hidden_states
+        )
+        
+        y_embeddings = jnp.stack(wav_embeddings, axis=1)
+        y_embeddings = jnp.transpose(y_embeddings, (0, 2, 1, 3))
+        y_embeddings = jnp.reshape(y_embeddings, 
+                                 (y_embeddings.shape[0], -1, y_embeddings.shape[-1]))
+        
+        y_d_rs = self.wd.apply({"params": wd_params}, y_embeddings)
         
         return y_d_rs

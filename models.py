@@ -159,7 +159,7 @@ class StyleEncoder(nn.Module):
         self.unshared = nn.Linear(dim_out, style_dim)
 
     def forward(self, x):
-        print("abc 1")
+        print("input mel shape : [B, C, H, W]")
         h = self.shared(x)
         h = h.view(h.size(0), -1)
         s = self.unshared(h)

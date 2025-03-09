@@ -314,6 +314,7 @@ class SourceModuleHnNSF(torch.nn.Module):
         # source for noise branch, in the same shape as uv
         noise = torch.randn_like(uv) * self.sine_amp / 3
         return sine_merge, noise, uv
+
 def padDiff(x):
     return F.pad(F.pad(x, (0,0,-1,1), 'constant', 0) - x, (0,0,0,-1), 'constant', 0)
 
