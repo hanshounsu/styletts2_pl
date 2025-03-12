@@ -72,7 +72,7 @@ class DownSample(nn.Module):
         elif self.layer_type == 'half':
             if x.shape[-1] % 2 != 0:
                 x = torch.cat([x, x[..., -1].unsqueeze(-1)], dim=-1)
-            return F.avg_pool2d(x, 2)
+            return F.avg_pool2d(x, 2) # input shape: [B, C, H, W]
         else:
             raise RuntimeError('Got unexpected donwsampletype %s, expected is [none, timepreserve, half]' % self.layer_type)
 
@@ -683,8 +683,8 @@ def build_model(args, text_aligner, pitch_extractor, bert):
     
     duration_prosody_predictor = DurationProsodyPredictor(style_dim=args.style_dim, d_hid=args.hidden_dim, nlayers=args.n_layer, max_dur=args.max_dur, dropout=args.dropout)
     
-    acoustic_style_encoder = StyleEncoder_P(dim_in=args.dim_in, style_dim=args.style_dim, max_conv_dim=args.hidden_dim) # acoustic style encoder
-    prosodic_style_encoder = StyleEncoder_P(dim_in=args.dim_in, style_dim=args.style_dim, max_conv_dim=args.hidden_dim) # prosodic style encoder
+    acoustic_style_encoder = StyleEncoder(dim_in=args.dim_in, style_dim=args.style_dim, max_conv_dim=args.hidden_dim) # acoustic style encoder
+    prosodic_style_encoder = StyleEncoder(dim_in=args.dim_in, style_dim=args.style_dim, max_conv_dim=args.hidden_dim) # prosodic style encoder
         
     # define diffusion model
     if args.multispeaker:

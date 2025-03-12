@@ -270,19 +270,20 @@ def main(config_path):
         if epoch >= diff_epoch:
             start_ds = True
 
-        # timeelapsed = TimeElapsed()
+        timeelapsed = TimeElapsed()
         for i, batch in enumerate(tqdm(train_dataloader)):
-            # timeelapsed("-3")
+            timeelapsed("-3")
             waves = batch[0]
             batch = [b.to(device) for b in batch[1:]]
             texts, input_lengths, ref_texts, ref_lengths, mels, mel_input_length, ref_mels = batch
 
             with torch.no_grad():
-                mask = length_to_mask(mel_input_length // (2 ** n_down)).to(device)
+                # mask = length_to_mask(mel_input_length // (2 ** n_down)).to(device)
+                mask = length_to_mask(mel_input_length // (2 ** n_down))
                 # mel_mask = length_to_mask(mel_input_length).to(device)
-                text_mask = length_to_mask(input_lengths).to(texts.device)
+                text_mask = length_to_mask(input_lengths)
 
-                # timeelapsed("-2")
+                timeelapsed("-2")
                 # 1. Extract the alignment matrix (now GT)
                 try:
                     _, _, s2s_attn = model.text_aligner(mels, mask, texts)
@@ -295,14 +296,14 @@ def main(config_path):
                 mask_ST = mask_from_lens(s2s_attn, input_lengths, mel_input_length // (2 ** n_down))
                 s2s_attn_mono = maximum_path(s2s_attn, mask_ST)
 
-                # timeelapsed("-1")
+                timeelapsed("-1")
                 # encode
                 t_en = model.text_encoder(texts, input_lengths, text_mask)
                 acoustic_text_gt_upsampled = (t_en @ s2s_attn_mono)
 
                 gt_dur = s2s_attn_mono.sum(axis=-1).detach()
                 
-                # timeelapsed("0")
+                timeelapsed("0")
                 # compute reference styles
                 if multispeaker and epoch >= diff_epoch:
                     # ref_ss = model.acoustic_style_encoder(ref_mels.unsqueeze(1))
@@ -312,7 +313,7 @@ def main(config_path):
                     ref_prosodic_style = model.prosodic_style_encoder(ref_mels.unsqueeze(1))
                     ref_style = torch.cat([ref_acoustic_style, ref_prosodic_style], dim=1)
                 
-                # timeelapsed("1")
+                timeelapsed("1")
 
             # compute the style of the entire utterance from mel
             # this operation cannot be done in batch because of the avgpool layer (may need to work on masked avgpool)
@@ -320,12 +321,12 @@ def main(config_path):
             prosodic_styles = model.prosodic_style_encoder(mels.unsqueeze(1), mel_input_length)
             acoustic_styles = model.acoustic_style_encoder(mels.unsqueeze(1), mel_input_length)
             s_trg = torch.cat([acoustic_styles, prosodic_styles], dim=-1).detach() # ground truth for denoiser
-            # timeelapsed("2")
+            timeelapsed("2")
 
             bert_dur = model.bert(texts, attention_mask=(~text_mask).int()) # [B, L] -> [B, L, D]
             pred_bert = model.bert_encoder(bert_dur).transpose(-1, -2) # this is simple linear layer [B, D', L] 
             
-            # timeelapsed("3")
+            timeelapsed("3")
             # Style denoiser training (model predicts style(s_trg) obtained from the same utterance, when conditioned with reference style(ref_style) obtained from reference audio from another utterance of same speaker)
             if epoch >= diff_epoch:
                 num_steps = np.random.randint(3, 5)
@@ -355,7 +356,7 @@ def main(config_path):
                 loss_sty = 0
                 loss_diff = 0
 
-            # timeelapsed("4")
+            timeelapsed("4")
             # From here, main training of decoder model
             # from BERT encoder and prosody style encoder, get the duration (prosody is predicted with F0Ntrain)
             pred_dur, prosodic_text_gt_upsampled = model.duration_prosody_predictor(pred_bert, prosodic_styles, 
@@ -366,7 +367,7 @@ def main(config_path):
             # set a mel_len, mel_len_st to crop the mel spectrogram (TODO: But why crop for decoder training, and not for denoiser training?)
             mel_len = min(int(mel_input_length.min().item() / 2 - 1), max_len // 2)
             mel_len_st = int(mel_input_length.min().item() / 2 - 1)
-            # timeelapsed("4.5")
+            timeelapsed("4.5")
             # en = []
             # gt = []
             # st = []
@@ -388,15 +389,15 @@ def main(config_path):
                 gt_mels.append(mels[bib, :, (random_start * 2):((random_start+mel_len) * 2)])
                 
                 gt_y = waves[bib][(random_start * 2) * 300:((random_start+mel_len) * 2) * 300]
-                gt_wav.append(torch.from_numpy(gt_y).to(device))
+                gt_wav.append(torch.from_numpy(gt_y))
 
                 # style reference (better to be different from the GT)
                 random_start = np.random.randint(0, mel_length - mel_len_st)
                 # st.append(mels[bib, :, (random_start * 2):((random_start+mel_len_st) * 2)])
                 style_ref_mels.append(mels[bib, :, (random_start * 2):((random_start+mel_len_st) * 2)])
                 
-            gt_wav = torch.stack(gt_wav).float().detach()
-            # timeelapsed("5")
+            gt_wav = torch.stack(gt_wav).float().detach().to(device)
+            timeelapsed("5")
 
             # en = torch.stack(en)
             # gt = torch.stack(gt).detach()
@@ -413,7 +414,7 @@ def main(config_path):
             # s = model.acoustic_style_encoder(st.unsqueeze(1) if multispeaker else gt.unsqueeze(1))
             prosodic_style = model.prosodic_style_encoder(style_ref_mels.unsqueeze(1) if multispeaker else gt_mels.unsqueeze(1))
             acoustic_style = model.acoustic_style_encoder(style_ref_mels.unsqueeze(1) if multispeaker else gt_mels.unsqueeze(1))
-            # timeelapsed("6")
+            timeelapsed("6")
 
             
             with torch.no_grad():
@@ -433,19 +434,19 @@ def main(config_path):
                 else:
                     # ground truth = reconstructed wav from decoder
                     gt_wav = y_rec_gt_pred # use reconstruction since decoder is fixed
-            # timeelapsed("7")
+            timeelapsed("7")
 
             F0_fake, N_fake = model.duration_prosody_predictor.F0Ntrain(prosodic_text_gt_upsampleds, prosodic_style)
-            # timeelapsed("8")
+            timeelapsed("8")
 
             # y_rec = model.decoder(en, F0_fake, N_fake, s)
             y_rec = model.decoder(acoustic_text_gt_upsampleds, F0_fake, N_fake, acoustic_style)
 
-            # timeelapsed("9")
+            timeelapsed("9")
             loss_F0_rec =  (F.smooth_l1_loss(F0_real, F0_fake)) / 10
             loss_norm_rec = F.smooth_l1_loss(N_real, N_fake)
 
-            # timeelapsed("10")
+            timeelapsed("10")
             if start_ds:
                 optimizer.zero_grad()
                 d_loss = dl(gt_wav.detach(), y_rec.detach()).mean()
@@ -454,7 +455,7 @@ def main(config_path):
                 optimizer.step('mpd')
             else:
                 d_loss = 0
-            # timeelapsed("11")
+            timeelapsed("11")
 
             # generator loss
             optimizer.zero_grad()
@@ -465,12 +466,12 @@ def main(config_path):
             else:
                 loss_gen_all = 0
             loss_lm = wl(gt_wav.detach().squeeze(), y_rec.squeeze()).mean()
-            # timeelapsed("12")
+            timeelapsed("12")
 
             loss_dur, loss_ce = compute_losses_of_variable_length_durations(pred_dur, gt_dur, input_lengths)
-            print(loss_dur, loss_ce)
+            # print(loss_dur, loss_ce)
 
-            # timeelapsed("13")
+            timeelapsed("13")
 
 
             g_loss = loss_params.lambda_mel * loss_mel + \
@@ -489,7 +490,7 @@ def main(config_path):
                 from IPython.core.debugger import set_trace
                 set_trace()
 
-            # timeelapsed("14")
+            timeelapsed("14")
             optimizer.step('bert_encoder')
             optimizer.step('bert')
             optimizer.step('duration_prosody_predictor')
@@ -574,7 +575,7 @@ def main(config_path):
                 
             iters = iters + 1
             
-            # timeelapsed("15")
+            timeelapsed("15")
             if (i+1)%log_interval == 0:
                 logger.info ('Epoch [%d/%d], Step [%d/%d], Loss: %.5f, Disc Loss: %.5f, Dur Loss: %.5f, CE Loss: %.5f, Norm Loss: %.5f, F0 Loss: %.5f, LM Loss: %.5f, Gen Loss: %.5f, Sty Loss: %.5f, Diff Loss: %.5f, DiscLM Loss: %.5f, GenLM Loss: %.5f'
                     %(epoch+1, epochs, i+1, len(train_list)//batch_size, running_loss / log_interval, d_loss, loss_dur, loss_ce, loss_norm_rec, loss_F0_rec, loss_lm, loss_gen_all, loss_sty, loss_diff, d_loss_slm, loss_gen_lm))
@@ -596,7 +597,7 @@ def main(config_path):
                 
                 print('Time elasped:', time.time()-start_time)
                 
-            # timeelapsed("16")
+            timeelapsed("16")
         loss_test = 0
         loss_align = 0
         loss_f = 0

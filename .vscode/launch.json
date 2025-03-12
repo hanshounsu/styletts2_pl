@@ -34,6 +34,22 @@
             "console": "integratedTerminal"
         },
         {
+            "name": "train_second",
+            "type": "debugpy",
+            "request": "launch",
+            "cwd": "/home/hounsu/voice/StyleTTS2/",
+            "program": "./train_second.py",
+            "args": [
+                "--config_path",
+                "Configs/config_libritts.yml",
+            ],
+            "env": {
+                "CUDA_VISIBLE_DEVICES": "0",
+            },
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
             "name": "train_second faster",
             "type": "debugpy",
             "request": "launch",

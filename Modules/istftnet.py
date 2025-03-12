@@ -348,6 +348,11 @@ class Generator(torch.nn.Module):
         
         
     def forward(self, x, s, f0):
+        '''
+        f0 shape : [B, T]
+        x shape : [B, C, T]
+        s shape : [B, style_dim]
+        '''
         with torch.no_grad():
             f0 = self.f0_upsamp(f0[:, None]).transpose(1, 2)  # bs,n,t
 
@@ -357,11 +362,11 @@ class Generator(torch.nn.Module):
             har = torch.cat([har_spec, har_phase], dim=1)
         
         for i in range(self.num_upsamples):
-            x = F.leaky_relu(x, LRELU_SLOPE)
-            x_source = self.noise_convs[i](har)
-            x_source = self.noise_res[i](x_source, s)
+            x = F.leaky_relu(x, LRELU_SLOPE) # [B, 512, 350]
+            x_source = self.noise_convs[i](har) # [B, mel_bin, 21001] -> [B, C, 3500]
+            x_source = self.noise_res[i](x_source, s) # [B, C, 3500]
 
-            x = self.ups[i](x)
+            x = self.ups[i](x) # [B, C, 3500]
             if i == self.num_upsamples - 1:
                 x = self.reflection_pad(x)
 
@@ -512,10 +517,10 @@ class Decoder(nn.Module):
         F0 = self.F0_conv(F0_curve.unsqueeze(1)) # (B, T) -> (B, 1, T//2)
         N = self.N_conv(N.unsqueeze(1)) # (B, T) -> (B, 1, T//2)
         
-        x = torch.cat([asr, F0, N], axis=1)
-        x = self.encode(x, s) # s is conditioned by AdaIN
+        x = torch.cat([asr, F0, N], axis=1) # (B, 1090, T//2)
+        x = self.encode(x, s) # (B, 1024, T//2) s is conditioned by AdaIN
         
-        asr_res = self.asr_res(asr)
+        asr_res = self.asr_res(asr) # (B, 64, T//2)
         
         res = True
         for block in self.decode:
